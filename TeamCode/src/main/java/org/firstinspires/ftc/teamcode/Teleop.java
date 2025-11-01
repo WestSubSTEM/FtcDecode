@@ -18,7 +18,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
-@TeleOp(name = "Tele Meet 1", group = "FTC Lib")
+@TeleOp(name = "Tele Meet 1", group = "Meet1")
 public class Teleop extends OpMode {
     // Declare OpMode members.
     private final ElapsedTime runtime = new ElapsedTime();
