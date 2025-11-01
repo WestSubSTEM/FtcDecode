@@ -32,7 +32,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@Autonomous(name="Auto Meet 3", group="FTC Lib")
+@Autonomous(name="Auto Red", group="Meet 1")
 public class AutoRed extends LinearOpMode
 {
     // Declare OpMode members.
@@ -73,7 +73,7 @@ public class AutoRed extends LinearOpMode
 
     long odoResetTime = 0;
 
-    boolean isRed = true;
+    public boolean isRed = true;
 
 
     @Override
@@ -106,16 +106,41 @@ public class AutoRed extends LinearOpMode
 //        }
 
 
+        int time = 2_200;
+        double speed = 0.4;
         if (isRed) {
-            strafeRightTime(0.4, 1_500);
+            strafeRightTime(speed, time);
         } else {
-            strafeLeftTime(0.4, 1_500);
+            strafeLeftTime(speed, time);
+        }
+        speed = .3;
+        speed = isRed ? speed : -speed;
+        time = 450;
+        turnTime(speed, time);
+        intakeMotor.setPower(1);
+        fwBotMotor.setPower(.66);
+        fwTopMotor.setPower(.66);
+        sleep(4_000);
+//        sleep(1_000);
+//        turnTime(-speed, time);
+
+        flipperServo.setPosition(STEMperFiConstants.FLIPPER_SHOOT);
+        sleep(1_000);
+        flipperServo.setPosition(STEMperFiConstants.FLIPPER_INTAKE);
+        fwBotMotor.setPower(0);
+        fwTopMotor.setPower(0);
+        intakeMotor.setPower(0);
+        speed = 0.4;
+        time = 1_000;
+        if (isRed) {
+            strafeRightTime(speed, time);
+        } else {
+            strafeLeftTime(speed, time);
         }
         sleep(5);
 //
 //        driveStraight(.3, 500, 0);
 //        sleep(1_000);
-//        turnToDegrees(.3, -90);
 //        sleep(500);
 //        driveStraight(.3, -180, 0);
 //        sleep(500);
@@ -313,6 +338,21 @@ public class AutoRed extends LinearOpMode
         mecanum.driveRobotCentric(0, 0, 0);
     }
 
+    public void turnTime(double maxTurnSpeed, long timeMs) {
+        long start = System.currentTimeMillis();
+        mecanum.driveRobotCentric(0, 0, maxTurnSpeed);
+        // Ensure that the OpMode is still active
+        while (opModeIsActive() && ((System.currentTimeMillis() - start) < timeMs)) {
+            sleep(100);
+            odo.update();
+            telemetry.addData("current y: ", odo.getPosY(DistanceUnit.MM));
+            telemetry.update();
+        }
+
+        mecanum.driveRobotCentric(0, 0, 0);
+
+    }
+
     public void turnToDegrees(double maxTurnSpeed, double angDeg) {
         odo.resetPosAndIMU();
         sleep(500);
@@ -353,8 +393,6 @@ public class AutoRed extends LinearOpMode
     public void strafeLeftTime(double maxDriveSpeed,
                            long timeMs) {
         long start = System.currentTimeMillis();
-        odo.resetPosAndIMU();
-        odo.update();
         mecanum.driveRobotCentric(-maxDriveSpeed, 0, 0);
         // Ensure that the OpMode is still active
         while (opModeIsActive() && ((System.currentTimeMillis() - start) < timeMs)) {
