@@ -33,7 +33,7 @@ public class Teleop extends OpMode {
     MotorGroup fwMotorGroup;
     Servo flipperServo, indexerServo;
     double flipperServoPosition = STEMperFiConstants.FLIPPER_INTAKE;
-    double indexerServoPosition = STEMperFiConstants.INDEX_2;
+    double indexerServoPosition = STEMperFiConstants.INDEX_1;
     boolean intakeOn = false;
     long serverIndexPressTimeMS = 0;
 
@@ -66,10 +66,10 @@ public class Teleop extends OpMode {
         intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         fwTopMotor = hardwareMap.get(DcMotorEx.class, "top launcher");
         fwTopMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        fwTopMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        fwTopMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         fwBotMotor = hardwareMap.get(DcMotorEx.class, "bottom launcher ");
         fwBotMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        fwBotMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        fwBotMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         flipperServo = hardwareMap.get(Servo.class, "flipper");
         indexerServo = hardwareMap.get(Servo.class, "indexer");
@@ -203,14 +203,15 @@ public class Teleop extends OpMode {
             fwTopMotor.setPower(0);
             fwBotMotor.setPower(0);
         } else if (square2ButtonReader.isDown()) {
-            fwTopMotor.setPower(.33);
-            fwBotMotor.setPower(.33);
+            fwTopMotor.setVelocity(10, AngleUnit.DEGREES);
+            fwTopMotor.setPower(.15);
+            fwBotMotor.setPower(.15);
         } else if (triangle2ButtonReader.isDown()) {
-            fwTopMotor.setPower(.66);
-            fwBotMotor.setPower(.66);
+            fwTopMotor.setPower(.4);
+            fwBotMotor.setPower(.4);
         } else if (circle2ButtonReader.isDown()) {
-            fwTopMotor.setPower(1);
-            fwBotMotor.setPower(1);
+            fwTopMotor.setPower(.5);
+            fwBotMotor.setPower(.5);
         }
     }
 }

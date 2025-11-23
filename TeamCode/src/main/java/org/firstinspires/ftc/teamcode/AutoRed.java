@@ -48,7 +48,7 @@ public class AutoRed extends LinearOpMode
     MotorGroup fwMotorGroup;
     Servo flipperServo, indexerServo;
     double flipperServoPosition = STEMperFiConstants.FLIPPER_INTAKE;
-    double indexerServoPosition = STEMperFiConstants.INDEX_2;
+    double indexerServoPosition = STEMperFiConstants.INDEX_1;
     boolean intakeOn = false;
     long serverIndexPressTimeMS = 0;
 

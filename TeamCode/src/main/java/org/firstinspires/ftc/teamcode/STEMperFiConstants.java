@@ -4,9 +4,9 @@ public class STEMperFiConstants {
     public static final double FLIPPER_INTAKE = 0.5;
     public static final double FLIPPER_SHOOT = .25;
 
-    public static final double INDEX_1 = 0.85;
-    public static final double INDEX_2 = 0.65;
-    public static final double INDEX_3 = 0.45;
+    public static final double INDEX_1 = 0.87;
+    public static final double INDEX_2 = 0.45;
+    public static final double INDEX_3 = 0.03;
 
     public static final long INTAKE_DURING_INDEX_MOVE_MS = 1500;
 
@@ -21,4 +21,7 @@ public class STEMperFiConstants {
     public static final double GB_LED_INDIGO = 0.666;
     public static final double GB_LED_VIOLET = 0.722;
     public static final double GB_LED_WHITE = 1.0;
+
+    private static final double SHOOT_RPM_FAR = 1_100;
+    public static final double SHOOT_RPS_FAR = SHOOT_RPM_FAR / 60;
 }
