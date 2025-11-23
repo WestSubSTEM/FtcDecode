@@ -37,8 +37,14 @@ public class Teleop extends OpMode {
     boolean intakeOn = false;
     long serverIndexPressTimeMS = 0;
 
+    long odoResetTime = 0;
+
     @Override
     public void init() {
+        customRumbleEffect = new Gamepad.RumbleEffect.Builder()
+                .addStep(1.0, 1.0, 500)  //  Rumble left motor 100% for 250 mSec
+                .build();
+
         // the extended gamepad object
         pg1 = new GamepadEx(gamepad1);
         gp2 = new GamepadEx(gamepad2);
@@ -109,8 +115,8 @@ public class Teleop extends OpMode {
         This is recommended before you run your autonomous, as a bad initial calibration can cause
         an incorrect starting value for x, y, and heading.
         */
-        odo.recalibrateIMU();
-        odo.resetPosAndIMU();
+        //odo.recalibrateIMU();
+        //odo.resetPosAndIMU();
     }
 
     /*
@@ -118,7 +124,7 @@ public class Teleop extends OpMode {
      */
     @Override
     public void init_loop() {
-        odo.resetPosAndIMU();
+        //odo.resetPosAndIMU();
     }
 
     /*
@@ -149,6 +155,15 @@ public class Teleop extends OpMode {
                 degrees,   // gyro value passed in here must be in degrees
                 false
         );
+        // Gamepad 1
+        if (gamepad1.right_trigger > .9 && gamepad1.left_trigger > .9) {
+            long now = System.currentTimeMillis();
+            if (now - odoResetTime > 1_000) {
+                odo.resetPosAndIMU();
+                odoResetTime = now;
+                gamepad1.runRumbleEffect(customRumbleEffect);
+            }
+        }
 
 
         // Gamepad 2

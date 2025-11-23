@@ -113,16 +113,16 @@ public class AutoRed extends LinearOpMode
         } else {
             strafeLeftTime(speed, time);
         }
+        speed = -0.4;
+        driveStraightTime(speed, 700);
         speed = .3;
         speed = isRed ? speed : -speed;
-        time = 450;
+        time = 430;
         turnTime(speed, time);
         intakeMotor.setPower(1);
         fwBotMotor.setPower(.66);
         fwTopMotor.setPower(.66);
         sleep(4_000);
-//        sleep(1_000);
-//        turnTime(-speed, time);
 
         flipperServo.setPosition(STEMperFiConstants.FLIPPER_SHOOT);
         sleep(1_000);
@@ -137,25 +137,7 @@ public class AutoRed extends LinearOpMode
         } else {
             strafeLeftTime(speed, time);
         }
-        sleep(5);
-//
-//        driveStraight(.3, 500, 0);
-//        sleep(1_000);
-//        sleep(500);
-//        driveStraight(.3, -180, 0);
-//        sleep(500);
-//        //strafeLeft(.3, 100);
-//        strafeLeftTime(.5, 1_500);
-//        sleep(4_000);
-//        strafeRight(.3, 200);
-//        sleep(1_000);
-//        turnToDegrees(.3, 75);
-//        strafeRightTime(0.4, 1_500);
-
-//        strafeLeft(.3, 200);
-  //      strafeRight(.3, 200);
-        // turnToDegrees(.2, -1.5708);
-       // driveStraight(.2, -500, 0);
+        sleep(3);
     }
         /*
      * Code to run ONCE when the driver hits INIT
@@ -309,32 +291,15 @@ public class AutoRed extends LinearOpMode
      *                   0 = fwd. +ve is CCW from fwd. -ve is CW from forward.
      *                   If a relative angle is required, add/subtract from the current robotHeading.
      */
-    public void driveStraight(double maxDriveSpeed,
-                              double distance,
-                              double heading) {
-
-
-        odo.resetPosAndIMU();
-        odo.update();
-        if (distance > 0) {
-            mecanum.driveRobotCentric(0, maxDriveSpeed, 0);
-            // Ensure that the OpMode is still active
-            while (odo.getPosX(DistanceUnit.MM) < distance && opModeIsActive()) {
-                odo.update();
-                telemetry.addData("target x: ", distance);
-                telemetry.addData("current x: ", odo.getPosX(DistanceUnit.MM));
-                telemetry.update();
-            }
-        } else {
-            mecanum.driveRobotCentric(0, -maxDriveSpeed, 0);
-            // Ensure that the OpMode is still active
-            while (odo.getPosX(DistanceUnit.MM) > distance && opModeIsActive()) {
-                odo.update();
-                telemetry.addData("target x: ", distance);
-                telemetry.addData("current x: ", odo.getPosX(DistanceUnit.MM));
-                telemetry.update();
-            }
+    public void driveStraightTime(double maxDriveSpeed,
+                              long timeMs) {
+        long start = System.currentTimeMillis();
+        mecanum.driveRobotCentric(0, maxDriveSpeed, 0);
+        // Ensure that the OpMode is still active
+        while (opModeIsActive() && ((System.currentTimeMillis() - start) < timeMs)) {
+            sleep(100);
         }
+
         mecanum.driveRobotCentric(0, 0, 0);
     }
 
