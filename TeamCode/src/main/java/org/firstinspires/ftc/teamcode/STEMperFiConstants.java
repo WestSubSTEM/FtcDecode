@@ -29,6 +29,6 @@ public class STEMperFiConstants {
     public static final double SHOOT_FAR_TICS_PER_SEC = (SHOOT_RPM_FAR / 60) * TICKS_PER_REV_6000RPM;
     public static final double SHOOT_RPS_FAR = SHOOT_RPM_FAR / 60;
 
-
+    public static final double SHOOT_RELATIVE_POWER_SHORT = .17;
 
 }
