@@ -241,9 +241,9 @@ public class BatBot
         } else if (gp2.getButton(GamepadKeys.Button.X)) { // SQUARE
             shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_SHORT;
         } else if (gp2.getButton(GamepadKeys.Button.Y)) { // TRIANGLE
-            shooterSpeed = .22;
+            shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_SHORT;
         } else if (gp2.getButton(GamepadKeys.Button.B)) { // CIRCLE
-            shooterSpeed = .3;
+            shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_SHORT;
         }
         if (shooterSpeed == 0) {
             fwTopMotor.stopMotor();

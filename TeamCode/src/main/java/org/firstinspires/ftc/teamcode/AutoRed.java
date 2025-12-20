@@ -33,7 +33,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@Autonomous(name="Auto Red", group="Meet 2")
+@Autonomous(name="Auto Red Shoot", group="Meet 2 Shoot")
 public class AutoRed extends LinearOpMode
 {
     // Declare OpMode members.

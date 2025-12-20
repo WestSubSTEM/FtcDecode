@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
-@Autonomous(name="Auto Red", group="Meet 2")
+@Autonomous(name="Auto Red Move", group="Meet 2 Move")
 public class AutoRedMove extends LinearOpMode
 {
     // Declare OpMode members.
@@ -34,7 +34,7 @@ public class AutoRedMove extends LinearOpMode
         }
         robot.indexerServoPosition = STEMperFiConstants.INDEX_1;
         robot.indexer(true);
-        int time = 250;
+        int time = 750;
         double speed = 0.4;
         if (!isRed) {
             strafeRightTime(speed, time);
