@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
@@ -32,20 +33,24 @@ public class BatBot
     public MecanumDrive mecanum;
     public GamepadEx gp1, gp2;
 //    public ButtonReader square2ButtonReader, triangle2ButtonReader, circle2ButtonReader, x2ButtonReader, rightBumper2Reader, dUp2ButtonReader, dDown2ButtonReader, dLeft2ButtonReader, dRight2ButtonReader, leftStick2ButtonReader, rightStick2ButtonReader;
-    public Servo flipperServo, indexerServo, ledServo;
+    public Servo flipperServo, indexerServo, ledServo, turretServo;
     public double flipperServoPosition = STEMperFiConstants.FLIPPER_INTAKE;
     public double indexerServoPosition = STEMperFiConstants.INDEX_1;
     public boolean intakeOn = false;
     public long serverIndexPressTimeMS = 0;
     public long odoResetTimeMS = 0;
     public double shooterSpeed = 0;
+    public double turretPosition = 0.5;
     public boolean shooterTriggerPressed = false;
     public long now = System.currentTimeMillis();
     public List<LynxModule> hubs;
     private Gamepad gamepad1, gamepad2;
-    public void init(HardwareMap hardwareMap, Gamepad gamepad1, Gamepad gamepad2) {
+
+    private Telemetry telemetry;
+    public void init(HardwareMap hardwareMap, Gamepad gamepad1, Gamepad gamepad2, Telemetry telemetry) {
         this.gamepad1 = gamepad1;
         this.gamepad2 = gamepad2;
+        this.telemetry = telemetry;
 
         customRumbleEffect = new Gamepad.RumbleEffect.Builder()
                 .addStep(1.0, 1.0, 500)  //  Rumble left motor 100% for 250 mSec
@@ -98,6 +103,7 @@ public class BatBot
         flipperServo = hardwareMap.get(Servo.class, "flipper");
         indexerServo = hardwareMap.get(Servo.class, "indexer");
         ledServo = hardwareMap.get(Servo.class, "gbled");
+        turretServo = hardwareMap.get(Servo.class, "turret");
         ledServo.setPosition(STEMperFiConstants.GB_LED_WHITE);
 
         odo = hardwareMap.get(GoBildaPinpointDriver.class, "odo");
@@ -241,10 +247,11 @@ public class BatBot
         } else if (gp2.getButton(GamepadKeys.Button.X)) { // SQUARE
             shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_SHORT;
         } else if (gp2.getButton(GamepadKeys.Button.Y)) { // TRIANGLE
-            shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_SHORT;
+            shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_MED;
         } else if (gp2.getButton(GamepadKeys.Button.B)) { // CIRCLE
-            shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_SHORT;
+            shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_HIGH;
         }
+        telemetry.addData("shooterSpeed", shooterSpeed);
         if (shooterSpeed == 0) {
             fwTopMotor.stopMotor();
             fwBotMotor.stopMotor();
@@ -252,9 +259,29 @@ public class BatBot
             fwTopMotor.set(shooterSpeed);
             fwBotMotor.set(shooterSpeed);
         }
+        double getPower = fwBotMotor.motor.getPower();
         if (fwBotMotor.motor.getPower() > .8) {
             fwBotMotor.motor.setPower(.8);
             fwTopMotor.motor.setPower(.8);
         }
+        telemetry.addData("getPower", getPower);
+        telemetry.update();
+    }
+    public void manualTurret () {
+        if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)){
+            turretPosition += 0.1;
+        } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
+            turretPosition += 0.01;
+        } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
+            turretPosition += -0.1;
+        } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_DOWN)) {
+            turretPosition += -0.01;
+        }
+        if (turretPosition>1){
+            turretPosition=1;
+        } else if (turretPosition<0) {
+            turretPosition=0;
+        }
+        turretServo.setPosition(turretPosition);
     }
 }

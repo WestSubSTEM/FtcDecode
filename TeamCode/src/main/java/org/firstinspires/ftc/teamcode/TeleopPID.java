@@ -39,6 +39,7 @@ public class TeleopPID extends OpMode {
     Gamepad.RumbleEffect customRumbleEffect;    // Use to build a custom rumble sequence.
     DcMotorEx intakeMotor;
     MotorEx fwTopMotor, fwBotMotor;
+    double shoot_set = 0;
 
     // input motors exactly as shown below
     MecanumDrive mecanum;
@@ -51,7 +52,7 @@ public class TeleopPID extends OpMode {
     boolean intakeOn = false;
     long serverIndexPressTimeMS = 0;
 
-    Telemetry t = PanelsTelemetry.INSTANCE.getFtcTelemetry();
+    //Telemetry t = PanelsTelemetry.INSTANCE.getFtcTelemetry();
 
     @Override
     public void init() {
@@ -229,18 +230,27 @@ public class TeleopPID extends OpMode {
         if (x2ButtonReader.isDown()) {
             fwTopMotor.stopMotor();
             fwBotMotor.stopMotor();
+            shoot_set = 0;
         } else if (square2ButtonReader.isDown()) {
-            fwTopMotor.set(.4);
-            fwBotMotor.set(.4);
+            shoot_set = 0.6;
+            fwTopMotor.set(shoot_set);
+            fwBotMotor.set(shoot_set);
             fwTopMotor.setVelocity(STEMperFiConstants.SHOOT_FAR_TICS_PER_SEC);
             fwBotMotor.setVelocity(STEMperFiConstants.SHOOT_FAR_TICS_PER_SEC);
+            telemetry.addData("setVelocity", fwTopMotor.get());
+        } else if (circle2ButtonReader.isDown()) {
+            shoot_set = .75;
+            fwTopMotor.set(shoot_set);
+            fwBotMotor.set(shoot_set);
+            fwTopMotor.setVelocity(STEMperFiConstants.SHOOT_FAR_TICS_PER_SEC);
+            fwBotMotor.setVelocity(STEMperFiConstants.SHOOT_FAR_TICS_PER_SEC);
+            telemetry.addData("fwt_pow", fwTopMotor.get());
         }
-
-        t.addData("fwt_pow", fwTopMotor.get());
-        t.addData("fwt_Rate", fwTopMotor.getRate());
-        t.addData("fwt", fwTopMotor.getVelocity());
-        t.addData("fwb", fwTopMotor.getVelocity());
-        t.update();
+        telemetry.addData("shoot_set", shoot_set);
+        telemetry.addData("fwt_pow", fwTopMotor.get());
+        telemetry.addData("fwt_Rate", fwTopMotor.getRate());
+        telemetry.addData("fwt_vel", fwTopMotor.getVelocity());
+        telemetry.update();
 //        else if (triangle2ButtonReader.isDown()) {
 //            fwTopMotor.setPower(.4);
 //            fwBotMotor.setPower(.4);

@@ -1,12 +1,12 @@
 package org.firstinspires.ftc.teamcode;
 
 public class STEMperFiConstants {
-    public static final double FLIPPER_INTAKE = 0.5;
+    public static final double FLIPPER_INTAKE = 0.52;
     public static final double FLIPPER_SHOOT = .25;
 
-    public static final double INDEX_1 = 0.89;
-    public static final double INDEX_2 = 0.45;
-    public static final double INDEX_3 = 0.01;
+    public static final double INDEX_1 = 0.92;
+    public static final double INDEX_2 = 0.48;
+    public static final double INDEX_3 = 0.02 ;
 
     public static final long INTAKE_DURING_INDEX_MOVE_MS = 1500;
 
@@ -29,6 +29,10 @@ public class STEMperFiConstants {
     public static final double SHOOT_FAR_TICS_PER_SEC = (SHOOT_RPM_FAR / 60) * TICKS_PER_REV_6000RPM;
     public static final double SHOOT_RPS_FAR = SHOOT_RPM_FAR / 60;
 
-    public static final double SHOOT_RELATIVE_POWER_SHORT = .17;
+    public static final double SHOOT_RELATIVE_POWER_SHORT = .17    ;
+
+    public static final double SHOOT_RELATIVE_POWER_MED = .21;
+
+    public static final double SHOOT_RELATIVE_POWER_HIGH = 1;
 
 }

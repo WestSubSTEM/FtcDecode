@@ -63,7 +63,7 @@ public class AutoRed extends LinearOpMode
 
     @Override
     public void runOpMode() {
-        robot.init(hardwareMap, gamepad1, gamepad2);
+        robot.init(hardwareMap, gamepad1, gamepad2, telemetry);
         robot.odo.recalibrateIMU();
         robot.odo.resetPosAndIMU();
 

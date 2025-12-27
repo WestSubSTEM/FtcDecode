@@ -1,25 +1,13 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.arcrobotics.ftclib.drivebase.MecanumDrive;
-import com.arcrobotics.ftclib.gamepad.ButtonReader;
-import com.arcrobotics.ftclib.gamepad.GamepadEx;
-import com.arcrobotics.ftclib.gamepad.GamepadKeys;
-import com.arcrobotics.ftclib.hardware.motors.Motor;
-import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.bylazar.configurables.annotations.Configurable;
-import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 @Configurable
-@TeleOp(name = "Tele Meet 2", group = "Meet2")
-public class Teleop extends OpMode {
+@TeleOp(name = "Turret adjust", group = "util")
+public class Turret extends OpMode {
     private final ElapsedTime runtime = new ElapsedTime();
     public BatBot robot = new BatBot();
 
@@ -57,20 +45,8 @@ public class Teleop extends OpMode {
     @Override
     public void loop() {
         robot.startLoop();
-
-        // Drive
-        robot.mecanumDrive();
-
-        // SHOOTER
-        robot.shoot();
-
-        // Indexer
-        robot.indexer(false);
-        // INTAKE
-        robot.intake();
-
-
-        // FLYWHEEL
-        robot.flywheel();
+        robot.manualTurret();
+        telemetry.addData("turret", robot.turretPosition);
+        telemetry.update();
     }
 }
