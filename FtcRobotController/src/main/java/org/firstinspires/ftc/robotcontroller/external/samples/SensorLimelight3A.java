@@ -67,7 +67,6 @@ import java.util.List;
  *   below the name of the Limelight on the top level configuration screen.
  */
 @TeleOp(name = "Sensor: Limelight3A", group = "Sensor")
-@Disabled
 public class SensorLimelight3A extends LinearOpMode {
 
     private Limelight3A limelight;
@@ -79,7 +78,7 @@ public class SensorLimelight3A extends LinearOpMode {
 
         telemetry.setMsTransmissionInterval(11);
 
-        limelight.pipelineSwitch(0);
+        limelight.pipelineSwitch(7);
 
         /*
          * Starts polling for data.  If you neglect to call start(), getLatestResult() will return null.
@@ -91,16 +90,16 @@ public class SensorLimelight3A extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            LLStatus status = limelight.getStatus();
-            telemetry.addData("Name", "%s",
-                    status.getName());
-            telemetry.addData("LL", "Temp: %.1fC, CPU: %.1f%%, FPS: %d",
-                    status.getTemp(), status.getCpu(),(int)status.getFps());
-            telemetry.addData("Pipeline", "Index: %d, Type: %s",
-                    status.getPipelineIndex(), status.getPipelineType());
-
             LLResult result = limelight.getLatestResult();
             if (result.isValid()) {
+                LLStatus status = limelight.getStatus();
+                telemetry.addData("Name", "%s",
+                        status.getName());
+                telemetry.addData("LL", "Temp: %.1fC, CPU: %.1f%%, FPS: %d",
+                        status.getTemp(), status.getCpu(),(int)status.getFps());
+                telemetry.addData("Pipeline", "Index: %d, Type: %s",
+                        status.getPipelineIndex(), status.getPipelineType());
+
                 // Access general information
                 Pose3D botpose = result.getBotpose();
                 double captureLatency = result.getCaptureLatency();
@@ -146,11 +145,12 @@ public class SensorLimelight3A extends LinearOpMode {
                 for (LLResultTypes.ColorResult cr : colorResults) {
                     telemetry.addData("Color", "X: %.2f, Y: %.2f", cr.getTargetXDegrees(), cr.getTargetYDegrees());
                 }
+                telemetry.update();
             } else {
-                telemetry.addData("Limelight", "No data available");
+                //telemetry.addData("Limelight", "No data available");
             }
 
-            telemetry.update();
+
         }
         limelight.stop();
     }

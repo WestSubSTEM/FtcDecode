@@ -1,25 +1,17 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.arcrobotics.ftclib.drivebase.MecanumDrive;
-import com.arcrobotics.ftclib.gamepad.ButtonReader;
-import com.arcrobotics.ftclib.gamepad.GamepadEx;
-import com.arcrobotics.ftclib.gamepad.GamepadKeys;
-import com.arcrobotics.ftclib.hardware.motors.Motor;
-import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.bylazar.configurables.annotations.Configurable;
-import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import java.util.List;
+
 @Configurable
-@TeleOp(name = "Tele Meet 3", group = "Meet3")
-public class Teleop extends OpMode {
+@TeleOp(name = "Turret Limelight", group = "util")
+public class TurretLimelight extends OpMode {
     private final ElapsedTime runtime = new ElapsedTime();
     public BatBot robot = new BatBot();
 
@@ -52,25 +44,24 @@ public class Teleop extends OpMode {
     @Override
     public void start() {
         runtime.reset();
+        robot.limelight.pipelineSwitch(STEMperFiConstants.LIMELIGHT_PIPELINE_AUTO);
+        robot.limelight.start();
     }
 
     @Override
     public void loop() {
         robot.startLoop();
-
-        // Drive
-        robot.mecanumDrive();
-
-        // SHOOTER
-        robot.shoot();
-
-        // Indexer
-        robot.indexer(false);
-        // INTAKE
-        robot.intake();
-
-
-        // FLYWHEEL
-        robot.flywheel();
+        LLResult result = robot.limelight.getLatestResult();
+        if (result.isValid()) {
+            List<LLResultTypes.FiducialResult> fiducialResults = result.getFiducialResults();
+            LLResultTypes.FiducialResult bob = fiducialResults.get(0);
+            if (bob != null) {
+                double xdif = bob.getTargetXDegrees();
+                telemetry.addData("Fiducial", "ID: %d, X: %.2f", bob.getFiducialId(), bob.getTargetXDegrees());
+                robot.adjustTurret(xdif);
+            }
+            telemetry.addData("turret", robot.turretPosition);
+            telemetry.update();
+        }
     }
 }

@@ -8,7 +8,7 @@ public class STEMperFiConstants {
     public static final double INDEX_2 = 0.48;
     public static final double INDEX_3 = 0.02 ;
 
-    public static final long INTAKE_DURING_INDEX_MOVE_MS = 1500;
+    public static final long INTAKE_DURING_INDEX_MOVE_MS = 250;
 
     public static final double GB_LED_OFF = 0;
     public static final double GB_LED_RED = 0.28;
@@ -34,5 +34,11 @@ public class STEMperFiConstants {
     public static final double SHOOT_RELATIVE_POWER_MED = .21;
 
     public static final double SHOOT_RELATIVE_POWER_HIGH = 1;
+
+    public static final long SHOOT_DELAY_INDEX_MS = 200;
+
+    public static final int LIMELIGHT_PIPELINE_BLUE = 7;
+    public static final int LIMELIGHT_PIPELINE_RED = 6;
+    public static final int LIMELIGHT_PIPELINE_AUTO = 5;
 
 }

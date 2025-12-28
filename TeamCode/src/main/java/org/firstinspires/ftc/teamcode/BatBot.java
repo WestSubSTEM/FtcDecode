@@ -7,6 +7,7 @@ import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -33,18 +34,20 @@ public class BatBot
     public MecanumDrive mecanum;
     public GamepadEx gp1, gp2;
 //    public ButtonReader square2ButtonReader, triangle2ButtonReader, circle2ButtonReader, x2ButtonReader, rightBumper2Reader, dUp2ButtonReader, dDown2ButtonReader, dLeft2ButtonReader, dRight2ButtonReader, leftStick2ButtonReader, rightStick2ButtonReader;
-    public Servo flipperServo, indexerServo, ledServo, turretServo;
+    public Servo flipperServo, indexerServo, turretServo;
     public double flipperServoPosition = STEMperFiConstants.FLIPPER_INTAKE;
     public double indexerServoPosition = STEMperFiConstants.INDEX_1;
     public boolean intakeOn = false;
-    public long serverIndexPressTimeMS = 0;
+    public long servoIndexPressTimeMS = 0;
     public long odoResetTimeMS = 0;
     public double shooterSpeed = 0;
-    public double turretPosition = 0.5;
+    public double turretPosition = 0.42;
     public boolean shooterTriggerPressed = false;
     public long now = System.currentTimeMillis();
     public List<LynxModule> hubs;
     private Gamepad gamepad1, gamepad2;
+    private long indexDelayDueToShooting = 0;
+    public Limelight3A limelight;
 
     private Telemetry telemetry;
     public void init(HardwareMap hardwareMap, Gamepad gamepad1, Gamepad gamepad2, Telemetry telemetry) {
@@ -102,9 +105,8 @@ public class BatBot
 
         flipperServo = hardwareMap.get(Servo.class, "flipper");
         indexerServo = hardwareMap.get(Servo.class, "indexer");
-        ledServo = hardwareMap.get(Servo.class, "gbled");
         turretServo = hardwareMap.get(Servo.class, "turret");
-        ledServo.setPosition(STEMperFiConstants.GB_LED_WHITE);
+        turretServo.setPosition(turretPosition);
 
         odo = hardwareMap.get(GoBildaPinpointDriver.class, "odo");
 
@@ -145,6 +147,8 @@ public class BatBot
         // DO this as needed in each
         //odo.recalibrateIMU();
         //odo.resetPosAndIMU();
+
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
     }
 
     public void mecanumDrive() {
@@ -173,8 +177,6 @@ public class BatBot
                 odo.resetPosAndIMU();
                 odoResetTimeMS = now;
                 gamepad1.runRumbleEffect(customRumbleEffect);
-
-                ledServo.setPosition(STEMperFiConstants.GB_LED_YELLOW);
             }
         }
     }
@@ -192,30 +194,34 @@ public class BatBot
     }
 
     public void shoot() {
-        flipperServoPosition = shooterTriggerPressed ? STEMperFiConstants.FLIPPER_SHOOT : STEMperFiConstants.FLIPPER_INTAKE;
+        double newPosition = shooterTriggerPressed ? STEMperFiConstants.FLIPPER_SHOOT : STEMperFiConstants.FLIPPER_INTAKE;
+        if (newPosition != flipperServoPosition) {
+            indexDelayDueToShooting = now + STEMperFiConstants.SHOOT_DELAY_INDEX_MS;
+        }
+        flipperServoPosition = newPosition;
         flipperServo.setPosition(flipperServoPosition);
     }
 
     public void indexer(boolean ledStatus) {
         // INDEXER
-        if (!shooterTriggerPressed) {
+        if (!shooterTriggerPressed && now > indexDelayDueToShooting) {
             if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
                 indexerServoPosition = STEMperFiConstants.INDEX_2;
-                serverIndexPressTimeMS = now;
+                servoIndexPressTimeMS = now;
                 if (ledStatus) {
-                    ledServo.setPosition(STEMperFiConstants.GB_LED_BLUE);
+                    //ledServo.setPosition(STEMperFiConstants.GB_LED_BLUE);
                 }
             } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
                 indexerServoPosition = STEMperFiConstants.INDEX_1;
-                serverIndexPressTimeMS = now;
+                servoIndexPressTimeMS = now;
                 if (ledStatus) {
-                    ledServo.setPosition(STEMperFiConstants.GB_LED_RED);
+                    //ledServo.setPosition(STEMperFiConstants.GB_LED_RED);
                 }
             } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
                 indexerServoPosition = STEMperFiConstants.INDEX_3;
-                serverIndexPressTimeMS = now;
+                servoIndexPressTimeMS = now;
                 if (ledStatus) {
-                    ledServo.setPosition(STEMperFiConstants.GB_LED_GREEN);
+                    //ledServo.setPosition(STEMperFiConstants.GB_LED_GREEN);
                 }
             }
             indexerServo.setPosition(indexerServoPosition);
@@ -229,7 +235,7 @@ public class BatBot
 
         double leftTrigger = gp2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER);
         double intakePower = 0;
-        if (intakeOn || shooterTriggerPressed || ((now - serverIndexPressTimeMS) < STEMperFiConstants.INTAKE_DURING_INDEX_MOVE_MS)) {
+        if (intakeOn || shooterTriggerPressed || ((now - servoIndexPressTimeMS) < STEMperFiConstants.INTAKE_DURING_INDEX_MOVE_MS)) {
             intakePower = 1;
         } else if (leftTrigger > 0.2) {
             intakePower = -leftTrigger;
@@ -282,6 +288,17 @@ public class BatBot
         } else if (turretPosition<0) {
             turretPosition=0;
         }
+        turretServo.setPosition(turretPosition);
+    }
+
+    public void adjustTurret(double xdif) {
+        if (xdif > 0) {
+            turretPosition += .0005;
+        } else if (xdif < 0) {
+            turretPosition -= .0005;
+        }
+        turretPosition = Math.min(turretPosition, .8);
+        turretPosition = Math.max(turretPosition, .2);
         turretServo.setPosition(turretPosition);
     }
 }
