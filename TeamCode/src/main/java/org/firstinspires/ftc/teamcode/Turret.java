@@ -46,6 +46,7 @@ public class Turret extends OpMode {
     public void loop() {
         robot.startLoop();
         robot.manualTurret();
+        robot.calibrateTurret();
         telemetry.addData("turret", robot.turretPosition);
         telemetry.update();
     }

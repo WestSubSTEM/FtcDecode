@@ -7,6 +7,8 @@ import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -41,13 +43,15 @@ public class BatBot
     public long servoIndexPressTimeMS = 0;
     public long odoResetTimeMS = 0;
     public double shooterSpeed = 0;
-    public double turretPosition = 0.42;
+    public double turretPosition = STEMperFiConstants.TURRET_CENTER;
     public boolean shooterTriggerPressed = false;
     public long now = System.currentTimeMillis();
     public List<LynxModule> hubs;
     private Gamepad gamepad1, gamepad2;
     private long indexDelayDueToShooting = 0;
     public Limelight3A limelight;
+
+    public long lastDetect = 0;
 
     private Telemetry telemetry;
     public void init(HardwareMap hardwareMap, Gamepad gamepad1, Gamepad gamepad2, Telemetry telemetry) {
@@ -277,11 +281,11 @@ public class BatBot
         if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)){
             turretPosition += 0.1;
         } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
-            turretPosition += 0.01;
+            turretPosition += 0.001;
         } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
             turretPosition += -0.1;
         } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_DOWN)) {
-            turretPosition += -0.01;
+            turretPosition += -0.001;
         }
         if (turretPosition>1){
             turretPosition=1;
@@ -291,14 +295,66 @@ public class BatBot
         turretServo.setPosition(turretPosition);
     }
 
-    public void adjustTurret(double xdif) {
-        if (xdif > 0) {
-            turretPosition += .0005;
-        } else if (xdif < 0) {
-            turretPosition -= .0005;
+    public void calibrateTurret () {
+        if (gp1.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
+            turretPosition = 0.2;
+        } else if (gp1.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
+            turretPosition = 0.7;
         }
-        turretPosition = Math.min(turretPosition, .8);
-        turretPosition = Math.max(turretPosition, .2);
         turretServo.setPosition(turretPosition);
+    }
+
+    long nextTurretUpdate = 0;
+    double ratio = 0;
+    double turretNudge = 0.001;
+    public void adjustTurret(double xdif) {
+        if (nextTurretUpdate < now) {
+            double degreeLimit = 3.0;
+            double pixelDiff = 25;
+            double pixelCenter = 635;
+            double pixelDifCenter = xdif - pixelCenter;
+            //if (xdif > degreeLimit) {
+            ratio = pixelDifCenter / pixelDiff;
+            telemetry.addData("ratio", ratio);
+            if (Math.abs(ratio) > 1) {
+                telemetry.addData("turretNudge", turretNudge * ratio);
+                turretPosition += turretNudge * ratio;
+                nextTurretUpdate = (long) (now + (10 * ( (turretNudge * Math.abs(ratio)) / STEMperFiConstants.SERVO_TRAVEL_PER_MS)));
+            } else {
+                telemetry.addData("turretNudge", 0);
+            }
+            turretPosition = Math.min(turretPosition, .8);
+            turretPosition = Math.max(turretPosition, .2);
+            turretServo.setPosition(turretPosition);
+        } else {
+            telemetry.addData("ratio", ratio);
+            telemetry.addData("turretNudge wait", ratio * turretNudge);
+            telemetry.addData("turretNudge ms", (long) (10 * ( (turretNudge * ratio) / STEMperFiConstants.SERVO_TRAVEL_PER_MS)));
+        }
+        telemetry.addData("turretPosition", turretPosition);
+    }
+
+    public void detect() {
+        LLResult result = limelight.getLatestResult();
+        if (result.isValid()) {
+            List<LLResultTypes.FiducialResult> fiducialResults = result.getFiducialResults();
+            LLResultTypes.FiducialResult bob = fiducialResults.get(0);
+            if (bob != null) {
+                lastDetect = now;
+                double xDif = bob.getTargetXDegrees();
+                double xPixDif = bob.getTargetXPixels();
+                double xNoCrossDif = bob.getTargetXDegreesNoCrosshair();
+                telemetry.addData("Fiducial", "ID: %d, XDeg: %.1f, Xpix: %.1f", bob.getFiducialId(), xDif, xPixDif);
+                telemetry.addData("Fiducial", "ID: %d, XnoC: %.1f, Xpix: %.1f", bob.getFiducialId(), xNoCrossDif, xPixDif);
+                adjustTurret(xPixDif);
+            }
+            telemetry.addData("turret", turretPosition);
+            telemetry.update();
+        }
+        if (now - lastDetect > 1_000) {
+            turretPosition = STEMperFiConstants.TURRET_CENTER;
+            turretServo.setPosition(turretPosition);
+        }
+
     }
 }

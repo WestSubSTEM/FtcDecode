@@ -4,6 +4,9 @@ import org.firstinspires.ftc.teamcode.Prism.Color;
 import org.firstinspires.ftc.teamcode.Prism.PrismAnimations;
 
 public class STEMperFiConstants {
+
+    public static final double SERVO_TRAVEL_PER_MS  = 0.5 / 3_000;
+    public static final double TURRET_CENTER =0.42;
     public static final double FLIPPER_INTAKE = 0.52;
     public static final double FLIPPER_SHOOT = .25;
 
@@ -32,9 +35,9 @@ public class STEMperFiConstants {
     public static final double SHOOT_FAR_TICS_PER_SEC = (SHOOT_RPM_FAR / 60) * TICKS_PER_REV_6000RPM;
     public static final double SHOOT_RPS_FAR = SHOOT_RPM_FAR / 60;
 
-    public static final double SHOOT_RELATIVE_POWER_SHORT = .17    ;
+    public static final double SHOOT_RELATIVE_POWER_SHORT = .19;
 
-    public static final double SHOOT_RELATIVE_POWER_MED = .21;
+    public static final double SHOOT_RELATIVE_POWER_MED = .23;
 
     public static final double SHOOT_RELATIVE_POWER_HIGH = 1;
 

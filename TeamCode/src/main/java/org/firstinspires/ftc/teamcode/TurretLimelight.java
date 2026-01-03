@@ -15,6 +15,7 @@ public class TurretLimelight extends OpMode {
     private final ElapsedTime runtime = new ElapsedTime();
     public BatBot robot = new BatBot();
 
+
     @Override
     public void init() {
         robot.init(hardwareMap, gamepad1, gamepad2, telemetry);
@@ -44,24 +45,30 @@ public class TurretLimelight extends OpMode {
     @Override
     public void start() {
         runtime.reset();
-        robot.limelight.pipelineSwitch(STEMperFiConstants.LIMELIGHT_PIPELINE_AUTO);
+        robot.limelight.pipelineSwitch(STEMperFiConstants.LIMELIGHT_PIPELINE_RED);
         robot.limelight.start();
     }
 
     @Override
     public void loop() {
         robot.startLoop();
-        LLResult result = robot.limelight.getLatestResult();
-        if (result.isValid()) {
-            List<LLResultTypes.FiducialResult> fiducialResults = result.getFiducialResults();
-            LLResultTypes.FiducialResult bob = fiducialResults.get(0);
-            if (bob != null) {
-                double xdif = bob.getTargetXDegrees();
-                telemetry.addData("Fiducial", "ID: %d, X: %.2f", bob.getFiducialId(), bob.getTargetXDegrees());
-                robot.adjustTurret(xdif);
-            }
-            telemetry.addData("turret", robot.turretPosition);
-            telemetry.update();
-        }
+/*
+        // Drive
+        robot.mecanumDrive();
+
+        // SHOOTER
+        robot.shoot();
+
+        // Indexer
+        robot.indexer(false);
+        // INTAKE
+        robot.intake();
+
+        // FLYWHEEL
+        robot.flywheel();
+*/
+
+        robot.detect();
+
     }
 }
