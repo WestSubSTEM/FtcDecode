@@ -25,6 +25,7 @@ package org.firstinspires.ftc.teamcode;
 
 import static org.firstinspires.ftc.teamcode.Prism.GoBildaPrismDriver.LayerHeight;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -59,7 +60,7 @@ import java.util.concurrent.TimeUnit;
  */
 
 @TeleOp(name="Prism Animations Example", group="Linear OpMode")
-//@Disabled
+@Disabled
 
 public class GoBildaPrismExample extends LinearOpMode {
 
@@ -80,7 +81,7 @@ public class GoBildaPrismExample extends LinearOpMode {
          * Set the number of LEDs (starting at 0) that are in your strip. This can be longer
          * than the actual length of the strip, but some animations won't look quite right.
          */
-        prism.setStripLength(24);
+        prism.setStripLength(35);
 
         /*
          * Here you can customize the specifics of different animations. Each animation has it's

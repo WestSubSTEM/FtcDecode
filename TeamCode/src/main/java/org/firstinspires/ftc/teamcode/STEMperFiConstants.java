@@ -4,6 +4,15 @@ import org.firstinspires.ftc.teamcode.Prism.Color;
 import org.firstinspires.ftc.teamcode.Prism.PrismAnimations;
 
 public class STEMperFiConstants {
+    public static final String BLACKBOARD_KEY_ALLIANCE = "BLACKBOARD_KEY_ALLIANCE";
+    public static final String BLACKBOARD_KEY_PATTERN = "BLACKBOARD_KEY_PATTERN";
+    public static final String ALLIANCE_BLUE = "BLUE";
+    public static final String ALLIANCE_RED = "RED";
+
+    public static final String PATTERN_21_GPP = "GPP";
+    public static final String PATTERN_22_PGP = "PGP";
+    public static final String PATTERN_23_PPG = "PPG";
+
 
     public static final double SERVO_TRAVEL_PER_MS  = 0.5 / 3_000;
     public static final double TURRET_CENTER =0.42;
@@ -13,6 +22,10 @@ public class STEMperFiConstants {
     public static final double INDEX_1 = 0.92;
     public static final double INDEX_2 = 0.48;
     public static final double INDEX_3 = 0.02 ;
+
+    public static final double[] AUTO_SHOTS_21_GPP = {INDEX_1, INDEX_2, INDEX_3};
+    public static final double[] AUTO_SHOTS_22_PGP = {INDEX_2, INDEX_1, INDEX_3};
+    public static final double[] AUTO_SHOTS_23_PPG = {INDEX_2, INDEX_3, INDEX_1};
 
     public static final long INTAKE_DURING_INDEX_MOVE_MS = 250;
 
@@ -38,7 +51,7 @@ public class STEMperFiConstants {
     public static final double SHOOT_RELATIVE_POWER_SHORT = .19;
 
     public static final double SHOOT_RELATIVE_POWER_MED = .23;
-
+    public static final double SHOOT_RELATIVE_POWER_MED_AUTO = .23;
     public static final double SHOOT_RELATIVE_POWER_HIGH = 1;
 
     public static final long SHOOT_DELAY_INDEX_MS = 200;
@@ -47,11 +60,13 @@ public class STEMperFiConstants {
     public static final int LIMELIGHT_PIPELINE_RED = 6;
     public static final int LIMELIGHT_PIPELINE_AUTO = 5;
     public static final int LED_BRIGHTNESS = 10;
+
+    public static final int LED_NUM = 35;
     public static final PrismAnimations.Solid[] LEFT_PURPLE = new PrismAnimations.Solid[3];
     public static final PrismAnimations.Solid[] LEFT_GREEN = new PrismAnimations.Solid[3];
     public static final PrismAnimations.Solid[] RIGHT_PURPLE = new PrismAnimations.Solid[3];
     public static final PrismAnimations.Solid[] RIGHT_GREEN = new PrismAnimations.Solid[3];
-    private static PrismAnimations.Solid getAnimationSolid(Color color, int startIndex, int stopIndex, int brightness) {
+    public static PrismAnimations.Solid getAnimationSolid(Color color, int startIndex, int stopIndex, int brightness) {
         PrismAnimations.Solid result = new PrismAnimations.Solid(color);
         result.setStartIndex(startIndex);
         result.setStopIndex(stopIndex);

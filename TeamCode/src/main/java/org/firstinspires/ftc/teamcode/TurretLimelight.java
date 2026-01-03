@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -10,6 +11,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import java.util.List;
 
 @Configurable
+@Disabled
 @TeleOp(name = "Turret Limelight", group = "util")
 public class TurretLimelight extends OpMode {
     private final ElapsedTime runtime = new ElapsedTime();
@@ -68,7 +70,7 @@ public class TurretLimelight extends OpMode {
         robot.flywheel();
 */
 
-        robot.detect();
+        robot.detectGoal(1_000);
 
     }
 }

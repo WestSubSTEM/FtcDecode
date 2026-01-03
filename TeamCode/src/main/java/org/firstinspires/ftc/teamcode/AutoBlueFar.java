@@ -2,10 +2,10 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-@Autonomous(name="Auto Blue Move", group="Meet 2 Move")
-public class AutoBlueMove extends AutoRedMove
+@Autonomous(name="Auto Blue Far", group="Meet 3 Far")
+public class AutoBlueFar extends AutoRedFar
 {
-    public AutoBlueMove() {
+    public AutoBlueFar() {
         super();
         isRed = false;
     }

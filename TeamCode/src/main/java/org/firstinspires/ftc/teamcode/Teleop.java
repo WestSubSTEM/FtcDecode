@@ -6,6 +6,8 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.Prism.Color;
+
 @Configurable
 @TeleOp(name = "Tele Meet 3", group = "Meet3")
 public class Teleop extends OpMode {
@@ -32,7 +34,10 @@ public class Teleop extends OpMode {
      */
     @Override
     public void init_loop() {
-        robot.odo.resetPosAndIMU();
+        robot.isRed = STEMperFiConstants.ALLIANCE_RED.equals(blackboard.getOrDefault(STEMperFiConstants.BLACKBOARD_KEY_ALLIANCE, STEMperFiConstants.ALLIANCE_RED));
+        robot.setAllLedsSolid(robot.isRed ? Color.RED: Color.BLUE);
+        robot.limelight.pipelineSwitch(robot.isRed ? STEMperFiConstants.LIMELIGHT_PIPELINE_RED : STEMperFiConstants.LIMELIGHT_PIPELINE_BLUE);
+        telemetry.addData("Alliance", blackboard.get(STEMperFiConstants.BLACKBOARD_KEY_ALLIANCE));
     }
 
     /*
@@ -41,6 +46,9 @@ public class Teleop extends OpMode {
     @Override
     public void start() {
         runtime.reset();
+        robot.limelight.start();
+        robot.isRed = blackboard.getOrDefault(STEMperFiConstants.BLACKBOARD_KEY_PATTERN, STEMperFiConstants.PATTERN_21_GPP) == STEMperFiConstants.ALLIANCE_RED;
+
     }
 
     @Override
@@ -60,5 +68,7 @@ public class Teleop extends OpMode {
 
         // FLYWHEEL
         robot.flywheel();
+
+        robot.detectGoal(1_000);
     }
 }

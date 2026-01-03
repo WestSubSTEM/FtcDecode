@@ -1,41 +1,15 @@
 package org.firstinspires.ftc.teamcode;
 
-import android.util.Size;
-
-import com.arcrobotics.ftclib.drivebase.MecanumDrive;
-import com.arcrobotics.ftclib.gamepad.ButtonReader;
-import com.arcrobotics.ftclib.gamepad.GamepadEx;
-import com.arcrobotics.ftclib.gamepad.GamepadKeys;
-import com.arcrobotics.ftclib.hardware.motors.Motor;
-import com.arcrobotics.ftclib.hardware.motors.MotorGroup;
-import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.Prism.Color;
-import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
-import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-@Autonomous(name="Auto Red Short", group="Meet 3 Short")
-public class AutoRed extends LinearOpMode
+@Autonomous(name="Auto Red Far", group="Meet 3 Far")
+public class AutoRedFar extends LinearOpMode
 {
     // Declare OpMode members.
     private final ElapsedTime runtime = new ElapsedTime();
@@ -52,26 +26,14 @@ public class AutoRed extends LinearOpMode
         } while (opModeIsActive() && System.currentTimeMillis() - waitStart < timeToWait);
     }
 
-    public void shootLoop(double nextBallIndex) {
-        robot.flipperServo.setPosition(STEMperFiConstants.FLIPPER_SHOOT);
-        waitFlyWheel(1_000);
-        robot.flipperServo.setPosition(STEMperFiConstants.FLIPPER_INTAKE);
-        waitFlyWheel(1_000);
-        robot.indexerServoPosition = nextBallIndex;
-        robot.indexer(true);
-        waitFlyWheel(1_000);
-    }
 
     @Override
     public void runOpMode() {
         robot.init(hardwareMap, gamepad1, gamepad2, telemetry);
         robot.odo.recalibrateIMU();
         robot.odo.resetPosAndIMU();
-
-        robot.init(hardwareMap, gamepad1, gamepad2, telemetry);
-        robot.odo.recalibrateIMU();
-        robot.odo.resetPosAndIMU();
         robot.limelight.pipelineSwitch(STEMperFiConstants.LIMELIGHT_PIPELINE_AUTO);
+        robot.limelight.start();
         robot.isRed = isRed;
         if (isRed) {
             blackboard.put(STEMperFiConstants.BLACKBOARD_KEY_ALLIANCE, STEMperFiConstants.ALLIANCE_RED);
@@ -81,9 +43,8 @@ public class AutoRed extends LinearOpMode
             robot.setAllLedsSolid(Color.BLUE);
         }
 
+
         while (opModeInInit()) {
-            robot.turretPosition = STEMperFiConstants.TURRET_CENTER;
-            robot.turretServo.setPosition(robot.turretPosition);
             if (!robot.indexMoved) {
                 robot.odo.resetPosAndIMU();
                 telemetry.addData("resetPosAndIMU: ", robot.indexMoved);
@@ -101,38 +62,11 @@ public class AutoRed extends LinearOpMode
             robot.indexer(true);
         }
         runtime.reset();
-        robot.limelight.start();
         robot.indexerServoPosition = STEMperFiConstants.INDEX_1;
         robot.indexer(true);
         robot.startLoop();
-        if (isRed) {
-            robot.turretPosition = STEMperFiConstants.TURRET_CENTER -.2;
-        } else {
-            robot.turretPosition = STEMperFiConstants.TURRET_CENTER +.3;
-        }
-        robot.turretServo.setPosition(robot.turretPosition);
-//        robot.shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_SHORT;
-//        waitFlyWheel(4_000);
-
-        robot.indexerServoPosition = STEMperFiConstants.INDEX_1;
-        robot.indexer(true);
-        int time = 1_250;
-        double speed = 0.4;
-        if (isRed) {
-            strafeRightTime(speed, time);
-        } else {
-            strafeLeftTime(speed, time);
-        }
-        speed = .3;
-        speed = isRed ? speed : -speed;
-        time = 480;
-        turnTime(speed, time);
-        speed = -.3;
-        time = 1200;
-        driveTime(speed, time);
-
-        robot.shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_SHORT;
-        waitFlyWheel(3_000);
+        robot.shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_MED_AUTO;
+        waitFlyWheel(4_000);
         while(!robot.detectAutoPattern() && runtime.milliseconds() < 1_000 ) {
             robot.startLoop();
             robot.flywheel();
@@ -141,18 +75,10 @@ public class AutoRed extends LinearOpMode
         blackboard.put(STEMperFiConstants.BLACKBOARD_KEY_PATTERN, robot.pattern);
         telemetry.addData("pattern", robot.pattern);
         telemetry.update();
-        if (isRed) {
-            robot.limelight.pipelineSwitch(STEMperFiConstants.LIMELIGHT_PIPELINE_RED);
-        } else {
-            robot.limelight.pipelineSwitch(STEMperFiConstants.LIMELIGHT_PIPELINE_BLUE);
-        }
-        robot.limelight.start();
-        robot.turretPosition = STEMperFiConstants.TURRET_CENTER;
+        robot.turretPosition += isRed ? .05 : -.05;
         robot.turretServo.setPosition(robot.turretPosition);
-
-        robot.intakeMotor.setPower(1);
-        robot.shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_SHORT;
-        waitFlyWheel(4_000);
+        robot.limelight.pipelineSwitch(robot.isRed ? STEMperFiConstants.LIMELIGHT_PIPELINE_RED : STEMperFiConstants.LIMELIGHT_PIPELINE_BLUE);
+        robot.limelight.start();
         runtime.reset();
         robot.startLoop();
         while(!robot.detectGoal(0) && runtime.milliseconds() < 2_000 ) {
@@ -170,6 +96,7 @@ public class AutoRed extends LinearOpMode
         } else if (STEMperFiConstants.PATTERN_23_PPG.equals(robot.pattern)) {
             shotOrder = STEMperFiConstants.AUTO_SHOTS_23_PPG;
         }
+
         waitFlyWheel(1_000);
         robot.intakeMotor.setPower(1);
         for (int i = 0; i < shotOrder.length; i++) {
@@ -184,24 +111,17 @@ public class AutoRed extends LinearOpMode
         robot.shooterSpeed = 0;
         robot.flywheel();
         robot.intakeMotor.setPower(0);
-
-        speed = .2;
-        time = 250;
+        double speed = .5;
+        long time = 600;
         driveTime(speed, time);
-
-        speed = 0.4;
-        time = 1_000;
-        if (!isRed) {
-            strafeRightTime(speed, time);
-        } else {
-            strafeLeftTime(speed, time);
-        }
-        speed = .2;
-        time = 750;
-        driveTime(speed, time);
-
-
-        sleep(5);
+        robot.indexerServoPosition = STEMperFiConstants.INDEX_1;
+        robot.indexer(false);
+        robot.prism.clearAllAnimations();
+        sleep(100);
+        robot.prism.clearAllAnimations();
+        sleep(50);
+        robot.prism.clearAllAnimations();
+        sleep(100);
     }
 
 
@@ -224,6 +144,7 @@ public class AutoRed extends LinearOpMode
         robot.mecanum.driveRobotCentric(0, maxDriveSpeed, 0);
         // Ensure that the OpMode is still active
         while (opModeIsActive() && ((System.currentTimeMillis() - start) < timeMs)) {
+            robot.startLoop();
             sleep(100);
         }
         robot.mecanum.driveRobotCentric(0, 0, 0);

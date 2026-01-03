@@ -19,15 +19,18 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.Prism.Color;
+import org.firstinspires.ftc.teamcode.Prism.GoBildaPrismDriver;
 
 import java.util.List;
 
 @Configurable
 public class BatBot
 {
+    public GoBildaPrismDriver prism;
     public static volatile double FLYWHEEL_kP = 20.0;
     public static volatile double FLYWHEEL_kV = 00.7;
-
+    public boolean isRed = true;
     public GoBildaPinpointDriver odo; // Declare OpMode member for the Odometry Computer
     public Gamepad.RumbleEffect customRumbleEffect;    // Use to build a custom rumble sequence.
     public DcMotor intakeMotor;
@@ -50,8 +53,9 @@ public class BatBot
     private Gamepad gamepad1, gamepad2;
     private long indexDelayDueToShooting = 0;
     public Limelight3A limelight;
-
+    public boolean indexMoved = false;
     public long lastDetect = 0;
+    public String pattern = STEMperFiConstants.PATTERN_21_GPP;
 
     private Telemetry telemetry;
     public void init(HardwareMap hardwareMap, Gamepad gamepad1, Gamepad gamepad2, Telemetry telemetry) {
@@ -69,6 +73,20 @@ public class BatBot
         // we do this in order to decrease our loop time
         hubs = hardwareMap.getAll(LynxModule.class);
         hubs.forEach(hub -> hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL));
+
+        /*
+         * Initialize the hardware variables. Note that the strings used here must correspond
+         * to the names assigned during the robot configuration step on the driver's station.
+         */
+        prism = hardwareMap.get(GoBildaPrismDriver.class,"prism");
+
+        /*
+         * Set the number of LEDs (starting at 0) that are in your strip. This can be longer
+         * than the actual length of the strip, but some animations won't look quite right.
+         */
+        prism.setStripLength(STEMperFiConstants.LED_NUM);
+
+
 
         // the extended gamepad object
         gp1 = new GamepadEx(gamepad1);
@@ -211,6 +229,7 @@ public class BatBot
         if (!shooterTriggerPressed && now > indexDelayDueToShooting) {
             if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
                 indexerServoPosition = STEMperFiConstants.INDEX_2;
+                indexMoved = true;
                 servoIndexPressTimeMS = now;
                 if (ledStatus) {
                     //ledServo.setPosition(STEMperFiConstants.GB_LED_BLUE);
@@ -223,6 +242,7 @@ public class BatBot
                 }
             } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
                 indexerServoPosition = STEMperFiConstants.INDEX_3;
+                indexMoved = true;
                 servoIndexPressTimeMS = now;
                 if (ledStatus) {
                     //ledServo.setPosition(STEMperFiConstants.GB_LED_GREEN);
@@ -307,7 +327,8 @@ public class BatBot
     long nextTurretUpdate = 0;
     double ratio = 0;
     double turretNudge = 0.001;
-    public void adjustTurret(double xdif) {
+    public boolean adjustTurret(double xdif) {
+        boolean isOnTarget = false;
         if (nextTurretUpdate < now) {
             double degreeLimit = 3.0;
             double pixelDiff = 25;
@@ -321,6 +342,7 @@ public class BatBot
                 turretPosition += turretNudge * ratio;
                 nextTurretUpdate = (long) (now + (10 * ( (turretNudge * Math.abs(ratio)) / STEMperFiConstants.SERVO_TRAVEL_PER_MS)));
             } else {
+                isOnTarget = true;
                 telemetry.addData("turretNudge", 0);
             }
             turretPosition = Math.min(turretPosition, .8);
@@ -332,9 +354,11 @@ public class BatBot
             telemetry.addData("turretNudge ms", (long) (10 * ( (turretNudge * ratio) / STEMperFiConstants.SERVO_TRAVEL_PER_MS)));
         }
         telemetry.addData("turretPosition", turretPosition);
+        return isOnTarget;
     }
 
-    public void detect() {
+    public boolean detectGoal(long timeout) {
+        boolean isOnTarget = false;
         LLResult result = limelight.getLatestResult();
         if (result.isValid()) {
             List<LLResultTypes.FiducialResult> fiducialResults = result.getFiducialResults();
@@ -346,15 +370,44 @@ public class BatBot
                 double xNoCrossDif = bob.getTargetXDegreesNoCrosshair();
                 telemetry.addData("Fiducial", "ID: %d, XDeg: %.1f, Xpix: %.1f", bob.getFiducialId(), xDif, xPixDif);
                 telemetry.addData("Fiducial", "ID: %d, XnoC: %.1f, Xpix: %.1f", bob.getFiducialId(), xNoCrossDif, xPixDif);
-                adjustTurret(xPixDif);
+                isOnTarget = adjustTurret(xPixDif);
             }
             telemetry.addData("turret", turretPosition);
-            telemetry.update();
         }
-        if (now - lastDetect > 1_000) {
+        if (timeout > 0 && now - lastDetect > timeout) {
             turretPosition = STEMperFiConstants.TURRET_CENTER;
             turretServo.setPosition(turretPosition);
         }
+        return isOnTarget;
+    }
 
+    public boolean detectAutoPattern() {
+        LLResult result = limelight.getLatestResult();
+        if (result.isValid()) {
+            List<LLResultTypes.FiducialResult> fiducialResults = result.getFiducialResults();
+            LLResultTypes.FiducialResult fiducialResult = fiducialResults.get(0);
+            if (fiducialResult != null) {
+                switch (fiducialResult.getFiducialId()) {
+                    case 21:
+                        pattern = STEMperFiConstants.PATTERN_21_GPP;
+                        break;
+                    case 22:
+                        pattern = STEMperFiConstants.PATTERN_22_PGP;
+                        break;
+                    case 23:
+                        pattern = STEMperFiConstants.PATTERN_23_PPG;
+                        break;
+                    default:
+                        return false;
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void setAllLedsSolid(Color color) {
+        prism.clearAllAnimations();
+        prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_0, STEMperFiConstants.getAnimationSolid(color, 0, STEMperFiConstants.LED_NUM - 1, STEMperFiConstants.LED_BRIGHTNESS));
     }
 }
