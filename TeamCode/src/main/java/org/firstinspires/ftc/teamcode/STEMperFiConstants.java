@@ -15,7 +15,7 @@ public class STEMperFiConstants {
 
 
     public static final double SERVO_TRAVEL_PER_MS  = 0.5 / 3_000;
-    public static final double TURRET_CENTER =0.42;
+    public static final double TURRET_CENTER =0.47;
     public static final double FLIPPER_INTAKE = 0.52;
     public static final double FLIPPER_SHOOT = .25;
 

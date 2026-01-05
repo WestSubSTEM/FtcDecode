@@ -184,6 +184,10 @@ public class AutoRed extends LinearOpMode
         robot.shooterSpeed = 0;
         robot.flywheel();
         robot.intakeMotor.setPower(0);
+        robot.indexerServoPosition = STEMperFiConstants.INDEX_1;
+        robot.indexer(false);
+        robot.turretPosition = STEMperFiConstants.TURRET_CENTER;
+        robot.turretServo.setPosition(robot.turretPosition);
 
         speed = .2;
         time = 250;

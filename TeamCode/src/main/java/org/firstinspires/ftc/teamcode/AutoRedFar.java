@@ -111,17 +111,19 @@ public class AutoRedFar extends LinearOpMode
         robot.shooterSpeed = 0;
         robot.flywheel();
         robot.intakeMotor.setPower(0);
+        robot.indexerServoPosition = STEMperFiConstants.INDEX_1;
+        robot.indexer(false);
+        robot.turretPosition = STEMperFiConstants.TURRET_CENTER;
+        robot.turretServo.setPosition(robot.turretPosition);
         double speed = .5;
         long time = 600;
         driveTime(speed, time);
-        robot.indexerServoPosition = STEMperFiConstants.INDEX_1;
-        robot.indexer(false);
         robot.prism.clearAllAnimations();
         sleep(100);
         robot.prism.clearAllAnimations();
         sleep(50);
         robot.prism.clearAllAnimations();
-        sleep(100);
+        sleep(2_00);
     }
 
 

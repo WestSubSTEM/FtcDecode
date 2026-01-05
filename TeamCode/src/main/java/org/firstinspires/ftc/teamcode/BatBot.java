@@ -332,7 +332,7 @@ public class BatBot
         if (nextTurretUpdate < now) {
             double degreeLimit = 3.0;
             double pixelDiff = 25;
-            double pixelCenter = 635;
+            double pixelCenter = isRed ? 635 : 620;
             double pixelDifCenter = xdif - pixelCenter;
             //if (xdif > degreeLimit) {
             ratio = pixelDifCenter / pixelDiff;
