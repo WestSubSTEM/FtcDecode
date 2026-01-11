@@ -128,7 +128,7 @@ public class SensorColor extends LinearOpMode {
     // contain the value. See http://web.archive.org/web/20190311170843/https://infohost.nmt.edu/tcc/help/pubs/colortheory/web/hsv.html
     // for an explanation of HSV color.
     final float[] hsvValues2 = new float[3];
-      final float[] hsvValues3 = new float[3];
+    final float[] hsvValues3 = new float[3];
 
     // xButtonPreviouslyPressed and xButtonCurrentlyPressed keep track of the previous and current
     // state of the X button on the gamepad

@@ -62,7 +62,7 @@ public class Teleop extends OpMode {
         robot.shoot();
 
         // Indexer
-        robot.indexer(false);
+        robot.indexer();
         // INTAKE
         robot.intake();
 

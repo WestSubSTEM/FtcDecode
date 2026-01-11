@@ -43,7 +43,6 @@ public class AutoRedFar extends LinearOpMode
             robot.setAllLedsSolid(Color.BLUE);
         }
 
-
         while (opModeInInit()) {
             if (!robot.indexMoved) {
                 robot.odo.resetPosAndIMU();
@@ -59,11 +58,10 @@ public class AutoRedFar extends LinearOpMode
             telemetry.addData(">", "Robot Heading = %4.0f", robot.odo.getHeading(AngleUnit.DEGREES));
             telemetry.update();
             robot.startLoop();
-            robot.indexer(true);
+            robot.indexer();
         }
         runtime.reset();
-        robot.indexerServoPosition = STEMperFiConstants.INDEX_1;
-        robot.indexer(true);
+        robot.setIndexerPosition(0);
         robot.startLoop();
         robot.shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_MED_AUTO;
         waitFlyWheel(4_000);
@@ -75,8 +73,8 @@ public class AutoRedFar extends LinearOpMode
         blackboard.put(STEMperFiConstants.BLACKBOARD_KEY_PATTERN, robot.pattern);
         telemetry.addData("pattern", robot.pattern);
         telemetry.update();
-        robot.turretPosition += isRed ? .05 : -.05;
-        robot.turretServo.setPosition(robot.turretPosition);
+       // robot.turretPosition += isRed ? .05 : -.05;
+       // robot.turretServo.setPosition(robot.turretPosition);
         robot.limelight.pipelineSwitch(robot.isRed ? STEMperFiConstants.LIMELIGHT_PIPELINE_RED : STEMperFiConstants.LIMELIGHT_PIPELINE_BLUE);
         robot.limelight.start();
         runtime.reset();
@@ -90,7 +88,7 @@ public class AutoRedFar extends LinearOpMode
         }
         telemetry.addData("Target", "on");
         telemetry.update();
-        double[] shotOrder = STEMperFiConstants.AUTO_SHOTS_21_GPP;
+        int[] shotOrder = STEMperFiConstants.AUTO_SHOTS_21_GPP;
         if (STEMperFiConstants.PATTERN_22_PGP.equals(robot.pattern)) {
             shotOrder = STEMperFiConstants.AUTO_SHOTS_22_PGP;
         } else if (STEMperFiConstants.PATTERN_23_PPG.equals(robot.pattern)) {
@@ -100,8 +98,7 @@ public class AutoRedFar extends LinearOpMode
         waitFlyWheel(1_000);
         robot.intakeMotor.setPower(1);
         for (int i = 0; i < shotOrder.length; i++) {
-            robot.indexerServoPosition = shotOrder[i];
-            robot.indexer(false);
+            robot.setIndexerPosition(shotOrder[i]);
             waitFlyWheel(750);
             robot.flipperServo.setPosition(STEMperFiConstants.FLIPPER_SHOOT);
             waitFlyWheel(750);
@@ -111,10 +108,9 @@ public class AutoRedFar extends LinearOpMode
         robot.shooterSpeed = 0;
         robot.flywheel();
         robot.intakeMotor.setPower(0);
-        robot.indexerServoPosition = STEMperFiConstants.INDEX_1;
-        robot.indexer(false);
-        robot.turretPosition = STEMperFiConstants.TURRET_CENTER;
-        robot.turretServo.setPosition(robot.turretPosition);
+        robot.setIndexerPosition(0);
+       // robot.turretPosition = STEMperFiConstants.TURRET_CENTER;
+      //  robot.turretServo.setPosition(robot.turretPosition);
         double speed = .5;
         long time = 600;
         driveTime(speed, time);

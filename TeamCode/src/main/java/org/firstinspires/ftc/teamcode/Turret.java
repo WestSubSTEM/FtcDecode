@@ -40,14 +40,13 @@ public class Turret extends OpMode {
     @Override
     public void start() {
         runtime.reset();
+        robot.turretMotor.set(0);
     }
 
     @Override
     public void loop() {
         robot.startLoop();
-        robot.manualTurret();
         robot.calibrateTurret();
-        telemetry.addData("turret", robot.turretPosition);
         telemetry.update();
     }
 }

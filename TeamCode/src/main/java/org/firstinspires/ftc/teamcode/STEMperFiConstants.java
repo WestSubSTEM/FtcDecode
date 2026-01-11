@@ -3,7 +3,20 @@ package org.firstinspires.ftc.teamcode;
 import org.firstinspires.ftc.teamcode.Prism.Color;
 import org.firstinspires.ftc.teamcode.Prism.PrismAnimations;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class STEMperFiConstants {
+    public static final double TURRET_ENCODER_COUNTS_PER_REV = 8192;
+    public static final double TURRET_SMALL_PULLY_TEETH_PER_REV = 60;
+    public static final double TURRET_LAZY_TEETH_PER_REV = 350;
+
+    public static final double TURRET_TICKS_PER_DEGREE = (TURRET_LAZY_TEETH_PER_REV / TURRET_SMALL_PULLY_TEETH_PER_REV) * TURRET_ENCODER_COUNTS_PER_REV / 360;
+
+    public static final int TURRET_MAX_TICKS = (int) (TURRET_TICKS_PER_DEGREE * 90);
+    public static final int TURRET_MIN_TICKS = -TURRET_MAX_TICKS;
+
+
     public static final String BLACKBOARD_KEY_ALLIANCE = "BLACKBOARD_KEY_ALLIANCE";
     public static final String BLACKBOARD_KEY_PATTERN = "BLACKBOARD_KEY_PATTERN";
     public static final String ALLIANCE_BLUE = "BLUE";
@@ -13,9 +26,6 @@ public class STEMperFiConstants {
     public static final String PATTERN_22_PGP = "PGP";
     public static final String PATTERN_23_PPG = "PPG";
 
-
-    public static final double SERVO_TRAVEL_PER_MS  = 0.5 / 3_000;
-    public static final double TURRET_CENTER =0.47;
     public static final double FLIPPER_INTAKE = 0.52;
     public static final double FLIPPER_SHOOT = .25;
 
@@ -23,11 +33,18 @@ public class STEMperFiConstants {
     public static final double INDEX_2 = 0.48;
     public static final double INDEX_3 = 0.02 ;
 
-    public static final double[] AUTO_SHOTS_21_GPP = {INDEX_1, INDEX_2, INDEX_3};
-    public static final double[] AUTO_SHOTS_22_PGP = {INDEX_2, INDEX_1, INDEX_3};
-    public static final double[] AUTO_SHOTS_23_PPG = {INDEX_2, INDEX_3, INDEX_1};
+    public static final List<Double> INDEXES = Arrays.asList(INDEX_1, INDEX_2, INDEX_3);
 
-    public static final long INTAKE_DURING_INDEX_MOVE_MS = 250;
+    public static final double BALL_DETECTION_DISTANCE_CM=7;
+
+
+    public static final float COLOR_SENSOR_GAIN = 2.0f;
+
+    public static final int[] AUTO_SHOTS_21_GPP = {0, 1, 2};
+    public static final int[] AUTO_SHOTS_22_PGP = {1, 0, 2};
+    public static final int[] AUTO_SHOTS_23_PPG = {2, 1, 0};
+
+    public static final long INTAKE_DURING_INDEXER_MOVE_MS = 250;
 
     public static final double GB_LED_OFF = 0;
     public static final double GB_LED_RED = 0.28;

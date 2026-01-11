@@ -52,16 +52,6 @@ public class AutoRed extends LinearOpMode
         } while (opModeIsActive() && System.currentTimeMillis() - waitStart < timeToWait);
     }
 
-    public void shootLoop(double nextBallIndex) {
-        robot.flipperServo.setPosition(STEMperFiConstants.FLIPPER_SHOOT);
-        waitFlyWheel(1_000);
-        robot.flipperServo.setPosition(STEMperFiConstants.FLIPPER_INTAKE);
-        waitFlyWheel(1_000);
-        robot.indexerServoPosition = nextBallIndex;
-        robot.indexer(true);
-        waitFlyWheel(1_000);
-    }
-
     @Override
     public void runOpMode() {
         robot.init(hardwareMap, gamepad1, gamepad2, telemetry);
@@ -82,8 +72,8 @@ public class AutoRed extends LinearOpMode
         }
 
         while (opModeInInit()) {
-            robot.turretPosition = STEMperFiConstants.TURRET_CENTER;
-            robot.turretServo.setPosition(robot.turretPosition);
+           // robot.turretPosition = STEMperFiConstants.TURRET_CENTER;
+          //  robot.turretServo.setPosition(robot.turretPosition);
             if (!robot.indexMoved) {
                 robot.odo.resetPosAndIMU();
                 telemetry.addData("resetPosAndIMU: ", robot.indexMoved);
@@ -98,24 +88,22 @@ public class AutoRed extends LinearOpMode
             telemetry.addData(">", "Robot Heading = %4.0f", robot.odo.getHeading(AngleUnit.DEGREES));
             telemetry.update();
             robot.startLoop();
-            robot.indexer(true);
+            robot.indexer();
         }
         runtime.reset();
         robot.limelight.start();
-        robot.indexerServoPosition = STEMperFiConstants.INDEX_1;
-        robot.indexer(true);
+        robot.setIndexerPosition(0);
         robot.startLoop();
         if (isRed) {
-            robot.turretPosition = STEMperFiConstants.TURRET_CENTER -.2;
+          //  robot.turretPosition = STEMperFiConstants.TURRET_CENTER -.2;
         } else {
-            robot.turretPosition = STEMperFiConstants.TURRET_CENTER +.3;
+           // robot.turretPosition = STEMperFiConstants.TURRET_CENTER +.3;
         }
-        robot.turretServo.setPosition(robot.turretPosition);
+       // robot.turretServo.setPosition(robot.turretPosition);
 //        robot.shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_SHORT;
 //        waitFlyWheel(4_000);
 
-        robot.indexerServoPosition = STEMperFiConstants.INDEX_1;
-        robot.indexer(true);
+        robot.setIndexerPosition(0);
         int time = 1_250;
         double speed = 0.4;
         if (isRed) {
@@ -147,8 +135,8 @@ public class AutoRed extends LinearOpMode
             robot.limelight.pipelineSwitch(STEMperFiConstants.LIMELIGHT_PIPELINE_BLUE);
         }
         robot.limelight.start();
-        robot.turretPosition = STEMperFiConstants.TURRET_CENTER;
-        robot.turretServo.setPosition(robot.turretPosition);
+       // robot.turretPosition = STEMperFiConstants.TURRET_CENTER;
+//robot.turretServo.setPosition(robot.turretPosition);
 
         robot.intakeMotor.setPower(1);
         robot.shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_SHORT;
@@ -164,7 +152,7 @@ public class AutoRed extends LinearOpMode
         }
         telemetry.addData("Target", "on");
         telemetry.update();
-        double[] shotOrder = STEMperFiConstants.AUTO_SHOTS_21_GPP;
+        int[] shotOrder = STEMperFiConstants.AUTO_SHOTS_21_GPP;
         if (STEMperFiConstants.PATTERN_22_PGP.equals(robot.pattern)) {
             shotOrder = STEMperFiConstants.AUTO_SHOTS_22_PGP;
         } else if (STEMperFiConstants.PATTERN_23_PPG.equals(robot.pattern)) {
@@ -173,8 +161,7 @@ public class AutoRed extends LinearOpMode
         waitFlyWheel(1_000);
         robot.intakeMotor.setPower(1);
         for (int i = 0; i < shotOrder.length; i++) {
-            robot.indexerServoPosition = shotOrder[i];
-            robot.indexer(false);
+            robot.setIndexerPosition(shotOrder[i]);
             waitFlyWheel(750);
             robot.flipperServo.setPosition(STEMperFiConstants.FLIPPER_SHOOT);
             waitFlyWheel(750);
@@ -184,10 +171,9 @@ public class AutoRed extends LinearOpMode
         robot.shooterSpeed = 0;
         robot.flywheel();
         robot.intakeMotor.setPower(0);
-        robot.indexerServoPosition = STEMperFiConstants.INDEX_1;
-        robot.indexer(false);
-        robot.turretPosition = STEMperFiConstants.TURRET_CENTER;
-        robot.turretServo.setPosition(robot.turretPosition);
+        robot.setIndexerPosition(0);
+       // robot.turretPosition = STEMperFiConstants.TURRET_CENTER;
+    //    robot.turretServo.setPosition(robot.turretPosition);
 
         speed = .2;
         time = 250;
