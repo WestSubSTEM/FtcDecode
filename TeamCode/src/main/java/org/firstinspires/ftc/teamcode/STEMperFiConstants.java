@@ -10,11 +10,12 @@ public class STEMperFiConstants {
     public static final double TURRET_ENCODER_COUNTS_PER_REV = 8192;
     public static final double TURRET_SMALL_PULLY_TEETH_PER_REV = 60;
     public static final double TURRET_LAZY_TEETH_PER_REV = 350;
-
     public static final double TURRET_TICKS_PER_DEGREE = (TURRET_LAZY_TEETH_PER_REV / TURRET_SMALL_PULLY_TEETH_PER_REV) * TURRET_ENCODER_COUNTS_PER_REV / 360;
-
     public static final int TURRET_MAX_TICKS = (int) (TURRET_TICKS_PER_DEGREE * 90);
     public static final int TURRET_MIN_TICKS = -TURRET_MAX_TICKS;
+    public static final double TURRET_MOTOR_POWER_MAX = 0.8;
+    // +- 1% target considered on target
+    public static final int TURRET_TARGET_DELTA = (int) (TURRET_MAX_TICKS * 0.01);
 
 
     public static final String BLACKBOARD_KEY_ALLIANCE = "BLACKBOARD_KEY_ALLIANCE";

@@ -12,7 +12,6 @@ import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -20,7 +19,6 @@ import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.SwitchableLight;
-import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -44,7 +42,8 @@ public class BatBot
     public GoBildaPinpointDriver odo; // Declare OpMode member for the Odometry Computer
     public Gamepad.RumbleEffect customRumbleEffect;    // Use to build a custom rumble sequence.
     public DcMotor intakeMotor;
-    public Motor fwTopMotor, fwBotMotor, turretMotor;
+    public Motor fwTopMotor, fwBotMotor;
+    public MotorEx turretMotor;
     public int turretTargetPosition = 0;
     // input motors exactly as shown below
     public MecanumDrive mecanum;
@@ -144,16 +143,11 @@ public class BatBot
         indexerServo = hardwareMap.get(Servo.class, "indexer");
         indexerLed = hardwareMap.get(Servo.class, "indexerLed");
 
-        turretMotor = new Motor(hardwareMap, "lazy",8192, 125 );
+        turretMotor = new MotorEx(hardwareMap, "lazy",8192, 125 );
         turretMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        turretMotor.stopAndResetEncoder();
-        turretMotor.setRunMode(Motor.RunMode.PositionControl);
-        turretMotor.setTargetPosition(turretTargetPosition);
-        turretMotor.setPositionCoefficient(0.01);
-        turretMotor.set(0);
-
-
-
+        turretTargetPosition = turretMotor.getCurrentPosition();
+        turretMotor.setRunMode(Motor.RunMode.RawPower);
+        turretMotor.stopMotor();
 
         cs2 = hardwareMap.get(NormalizedColorSensor.class, "color_range");
         cs3 = hardwareMap.get(NormalizedColorSensor.class, "color_v3");
@@ -462,7 +456,7 @@ public class BatBot
 
     long nextTurretUpdate = 0;
 
-    public void adjustTurretDegrees(double xdif) {
+    public void adjustTurretTargetPosition(double xdif) {
         int currentPosition = turretMotor.getCurrentPosition();
         int newPosition = currentPosition + (int) (xdif * STEMperFiConstants.TURRET_TICKS_PER_DEGREE);
         if (newPosition > STEMperFiConstants.TURRET_MAX_TICKS) {
@@ -470,14 +464,26 @@ public class BatBot
         } else if (newPosition < STEMperFiConstants.TURRET_MIN_TICKS) {
             newPosition = STEMperFiConstants.TURRET_MIN_TICKS;
         }
-        turretMotor.setTargetPosition(newPosition);
-        turretMotor.set(.8);
-        telemetry.addData("turret now pos", currentPosition);
-        telemetry.addData("turret new pos", newPosition);
+        telemetry.addData("turret    cur pos", currentPosition);
+        telemetry.addData("turret target pos", newPosition);
+        turretTargetPosition = newPosition;
     }
 
-    public boolean detectGoal(long timeout) {
-        boolean isOnTarget = false;
+    public void setTurretPower() {
+        int currentPosition = turretMotor.getCurrentPosition();
+        int dif = turretTargetPosition - currentPosition;
+        isOnTarget = Math.abs(dif) < STEMperFiConstants.TURRET_TARGET_DELTA;
+        if (isOnTarget) {
+            turretMotor.stopMotor();
+        } else {
+            double newTurretPower = STEMperFiConstants.TURRET_MOTOR_POWER_MAX * (dif / STEMperFiConstants.TURRET_MAX_TICKS);
+            telemetry.addData("turret Power: ", newTurretPower);
+            turretMotor.set(newTurretPower);
+        }
+    }
+
+    boolean isOnTarget = false;
+    public void detectGoal(long timeout) {
         LLResult result = limelight.getLatestResult();
         if (result.isValid()) {
             List<LLResultTypes.FiducialResult> fiducialResults = result.getFiducialResults();
@@ -489,15 +495,11 @@ public class BatBot
                 double xNoCrossDif = fiducialResult.getTargetXDegreesNoCrosshair();
                 telemetry.addData("Fiducial", "ID: %d, XDeg: %.1f, Xpix: %.1f", fiducialResult.getFiducialId(), xDif, xPixDif);
                 telemetry.addData("Fiducial", "ID: %d, XnoC: %.1f, Xpix: %.1f", fiducialResult.getFiducialId(), xNoCrossDif, xPixDif);
-                adjustTurretDegrees(xDif);
-                isOnTarget = xDif < 0.01;
+                adjustTurretTargetPosition(xDif);
             }
+        } else if (timeout > 0 && now - lastDetect > timeout) {
+            turretTargetPosition = 0;
         }
-        if (timeout > 0 && now - lastDetect > timeout) {
-            turretMotor.setTargetPosition(0);
-            turretMotor.set(.8);
-        }
-        return isOnTarget;
     }
 
     public boolean detectAutoPattern() {
