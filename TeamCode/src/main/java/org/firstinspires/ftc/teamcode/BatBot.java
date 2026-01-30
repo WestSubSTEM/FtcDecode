@@ -12,6 +12,7 @@ import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -42,8 +43,8 @@ public class BatBot
     public GoBildaPinpointDriver odo; // Declare OpMode member for the Odometry Computer
     public Gamepad.RumbleEffect customRumbleEffect;    // Use to build a custom rumble sequence.
     public DcMotor intakeMotor;
-    public Motor fwTopMotor, fwBotMotor;
-    public MotorEx turretMotor;
+    public Motor fwBotMotor;
+    public DcMotorEx turretMotor;
     public int turretTargetPosition = 0;
     // input motors exactly as shown below
     public MecanumDrive mecanum;
@@ -128,11 +129,6 @@ public class BatBot
         intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        fwTopMotor = new Motor(hardwareMap, "top launcher", Motor.GoBILDA.BARE);
-        fwTopMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
-        fwTopMotor.setRunMode(MotorEx.RunMode.VelocityControl);
-        fwTopMotor.setVeloCoefficients(FLYWHEEL_kP, 0, 0);
-        fwTopMotor.setFeedforwardCoefficients(0, FLYWHEEL_kV);
         fwBotMotor = new Motor(hardwareMap, "bottom launcher", Motor.GoBILDA.BARE);
         fwBotMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
         fwBotMotor.setRunMode(MotorEx.RunMode.VelocityControl);
@@ -143,11 +139,9 @@ public class BatBot
         indexerServo = hardwareMap.get(Servo.class, "indexer");
         indexerLed = hardwareMap.get(Servo.class, "indexerLed");
 
-        turretMotor = new MotorEx(hardwareMap, "lazy",8192, 125 );
-        turretMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        turretTargetPosition = turretMotor.getCurrentPosition();
-        turretMotor.setRunMode(Motor.RunMode.RawPower);
-        turretMotor.stopMotor();
+        turretMotor = hardwareMap.get(DcMotorEx.class, "lazy");
+        turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        turretMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         cs2 = hardwareMap.get(NormalizedColorSensor.class, "color_range");
         cs3 = hardwareMap.get(NormalizedColorSensor.class, "color_v3");
@@ -386,78 +380,59 @@ public class BatBot
         }
         telemetry.addData("shooterSpeed", shooterSpeed);
         if (shooterSpeed == 0) {
-            fwTopMotor.stopMotor();
             fwBotMotor.stopMotor();
         } else {
-            fwTopMotor.set(shooterSpeed);
             fwBotMotor.set(shooterSpeed);
         }
         double getPower = fwBotMotor.motor.getPower();
         if (fwBotMotor.motor.getPower() > .8) {
             fwBotMotor.motor.setPower(.8);
-            fwTopMotor.motor.setPower(.8);
         }
         telemetry.addData("getPower", getPower);
         telemetry.update();
     }
-    public void manualTurret () {
-        turretMotor.setRunMode(Motor.RunMode.RawPower);
-        turretMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
-        if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)){
-            turretMotor.set(turretMotor.get() + .1);
-        } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
-            turretMotor.set(turretMotor.get() + .01);
-        } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
-            turretMotor.set(turretMotor.get() - .1);
-        } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_DOWN)) {
-            turretMotor.set(turretMotor.get() - .01);
-        } else if (gp2.wasJustPressed(GamepadKeys.Button.LEFT_STICK_BUTTON)) {
-            turretMotor.set(0);
-        }
-        telemetry.addData("turret pow: ", turretMotor.get());
-        telemetry.addData("turret pos: ", turretMotor.getCurrentPosition());
-        telemetry.addData("turret ang", turretMotor.getCurrentPosition()/ STEMperFiConstants.TURRET_TICKS_PER_DEGREE );
-    }
+//    public void manualTurret () {
+//        turretMotor.setRunMode(Motor.RunMode.RawPower);
+//        turretMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
+//        if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)){
+//            turretMotor.set(turretMotor.get() + .1);
+//        } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
+//            turretMotor.set(turretMotor.get() + .01);
+//        } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
+//            turretMotor.set(turretMotor.get() - .1);
+//        } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_DOWN)) {
+//            turretMotor.set(turretMotor.get() - .01);
+//        } else if (gp2.wasJustPressed(GamepadKeys.Button.LEFT_STICK_BUTTON)) {
+//            turretMotor.set(0);
+//        }
+//        telemetry.addData("turret pow: ", turretMotor.get());
+//        telemetry.addData("turret pos: ", turretMotor.getCurrentPosition());
+//        telemetry.addData("turret ang", turretMotor.getCurrentPosition()/ STEMperFiConstants.TURRET_TICKS_PER_DEGREE );
+//    }
 
     public void calibrateTurret () {
-        turretMotor.setRunMode(Motor.RunMode.PositionControl);
         if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)){
-            turretTargetPosition += 10000;
+            turretTargetPosition += 1_000 * 5;
         } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
-            turretTargetPosition += 1000;
+            turretTargetPosition += 1_000;
         } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
-            turretTargetPosition -= 10000;
+            turretTargetPosition -= 1_000 * 5;
         } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_DOWN)) {
-            turretTargetPosition -= 1000;
+            turretTargetPosition -= 1_000;
         } else if (gp2.wasJustPressed(GamepadKeys.Button.LEFT_STICK_BUTTON)) {
-            turretTargetPosition = turretMotor.getCurrentPosition();
+            turretTargetPosition = -turretMotor.getCurrentPosition();
+        } else if (gp2.wasJustPressed(GamepadKeys.Button.RIGHT_STICK_BUTTON)) {
+            turretTargetPosition = 0;
         }
-        int diff = Math.abs(turretTargetPosition - turretMotor.getCurrentPosition());
-        turretMotor.setTargetPosition(turretTargetPosition);
-        double power = 0.1;
-        if (diff < 10) {
-            power = 0.001;
-        } else if (diff < 100) {
-            power = 0.01;
-        }
-        turretMotor.set(-power);
-        if (turretMotor.motor.getPower() > power) {
-            turretMotor.motor.setPower(power);
-        } else if (turretMotor.motor.getPower() < -power) {
-            turretMotor.motor.setPower(-power);
-        }
-        //turretMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION;
-        telemetry.addData("turret pow: ", turretMotor.get());
-        telemetry.addData("turret raw: ", turretMotor.motor.getPower());
-        telemetry.addData("turret pos: ", turretMotor.getCurrentPosition());
-        telemetry.addData("turret tar: ", turretTargetPosition);
-        telemetry.addData("turret ang",  turretMotor.getCurrentPosition() / STEMperFiConstants.TURRET_TICKS_PER_DEGREE );
+        turretTargetPosition = Math.min(turretTargetPosition, STEMperFiConstants.TURRET_MAX_TICKS);
+        turretTargetPosition = Math.max(turretTargetPosition, -STEMperFiConstants.TURRET_MAX_TICKS);
+        telemetry.addData("turretTargetPosition:",turretTargetPosition);
    }
 
     long nextTurretUpdate = 0;
 
     public void adjustTurretTargetPosition(double xdif) {
-        int currentPosition = turretMotor.getCurrentPosition();
+        int currentPosition = -turretMotor.getCurrentPosition();
         int newPosition = currentPosition + (int) (xdif * STEMperFiConstants.TURRET_TICKS_PER_DEGREE);
         if (newPosition > STEMperFiConstants.TURRET_MAX_TICKS) {
             newPosition = STEMperFiConstants.TURRET_MAX_TICKS;
@@ -469,21 +444,26 @@ public class BatBot
         turretTargetPosition = newPosition;
     }
 
-    public void setTurretPower() {
-        int currentPosition = turretMotor.getCurrentPosition();
+    public boolean setTurretPower() {
+        int currentPosition = -turretMotor.getCurrentPosition();
         int dif = turretTargetPosition - currentPosition;
         isOnTarget = Math.abs(dif) < STEMperFiConstants.TURRET_TARGET_DELTA;
+        double newTurretPower = STEMperFiConstants.TURRET_MOTOR_POWER_MAX * 1.8 * (((double)dif) / (double)STEMperFiConstants.TURRET_MAX_TICKS);
+        newTurretPower = Math.min(STEMperFiConstants.TURRET_MOTOR_POWER_MAX, newTurretPower);
+        newTurretPower = Math.max(-STEMperFiConstants.TURRET_MOTOR_POWER_MAX, newTurretPower);
+        newTurretPower = newTurretPower > 0 && newTurretPower < STEMperFiConstants.TURRET_MOTOR_POWER_MIN ? STEMperFiConstants.TURRET_MOTOR_POWER_MIN : newTurretPower;
+        newTurretPower = newTurretPower < 0 && newTurretPower > -STEMperFiConstants.TURRET_MOTOR_POWER_MIN ? -STEMperFiConstants.TURRET_MOTOR_POWER_MIN : newTurretPower;
         if (isOnTarget) {
-            turretMotor.stopMotor();
-        } else {
-            double newTurretPower = STEMperFiConstants.TURRET_MOTOR_POWER_MAX * (dif / STEMperFiConstants.TURRET_MAX_TICKS);
-            telemetry.addData("turret Power: ", newTurretPower);
-            turretMotor.set(newTurretPower);
+            newTurretPower = 0;
         }
+        turretMotor.setPower(newTurretPower);
+        telemetry.addData("current  Pos: ", currentPosition);
+        telemetry.addData("turret Power: ", newTurretPower);
+        return isOnTarget;
     }
 
     boolean isOnTarget = false;
-    public void detectGoal(long timeout) {
+    public boolean detectGoal(long timeout) {
         LLResult result = limelight.getLatestResult();
         if (result.isValid()) {
             List<LLResultTypes.FiducialResult> fiducialResults = result.getFiducialResults();
@@ -496,10 +476,12 @@ public class BatBot
                 telemetry.addData("Fiducial", "ID: %d, XDeg: %.1f, Xpix: %.1f", fiducialResult.getFiducialId(), xDif, xPixDif);
                 telemetry.addData("Fiducial", "ID: %d, XnoC: %.1f, Xpix: %.1f", fiducialResult.getFiducialId(), xNoCrossDif, xPixDif);
                 adjustTurretTargetPosition(xDif);
+                return setTurretPower();
             }
         } else if (timeout > 0 && now - lastDetect > timeout) {
             turretTargetPosition = 0;
         }
+        return false;
     }
 
     public boolean detectAutoPattern() {

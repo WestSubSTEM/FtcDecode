@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Configurable
-@TeleOp(name = "Turret adjust", group = "util")
+@TeleOp(name = "Turret adjust self", group = "util")
 public class Turret extends OpMode {
     private final ElapsedTime runtime = new ElapsedTime();
     public BatBot robot = new BatBot();
@@ -24,6 +24,7 @@ public class Turret extends OpMode {
         */
         //odo.recalibrateIMU();
         //odo.resetPosAndIMU();
+        //robot.turretMotor.stopAndResetEncoder();
     }
 
     /*
@@ -40,13 +41,14 @@ public class Turret extends OpMode {
     @Override
     public void start() {
         runtime.reset();
-        robot.turretMotor.set(0);
+        robot.turretMotor.setPower(0);
     }
 
     @Override
     public void loop() {
         robot.startLoop();
         robot.calibrateTurret();
+        robot.setTurretPower();
         telemetry.update();
     }
 }

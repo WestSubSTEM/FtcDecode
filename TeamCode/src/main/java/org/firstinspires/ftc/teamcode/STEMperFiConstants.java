@@ -14,6 +14,8 @@ public class STEMperFiConstants {
     public static final int TURRET_MAX_TICKS = (int) (TURRET_TICKS_PER_DEGREE * 90);
     public static final int TURRET_MIN_TICKS = -TURRET_MAX_TICKS;
     public static final double TURRET_MOTOR_POWER_MAX = 0.8;
+    public static final double TURRET_MOTOR_POWER_MIN = .3;
+
     // +- 1% target considered on target
     public static final int TURRET_TARGET_DELTA = (int) (TURRET_MAX_TICKS * 0.01);
 
