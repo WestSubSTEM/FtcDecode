@@ -302,57 +302,58 @@ public class BatBot
         }
         intakeMotor.setPower(intakePower);
 
-        if (indexerContents.get(indexerIndex) == Color.WHITE && isBallIn()) {
-            Color ballColor = determineColor();
-            indexerContents.set(indexerIndex, ballColor);
-            if (isIndexerFull()) {
-                setIndexerPosition(2);
-            }
-        }
+//        if (indexerContents.get(indexerIndex) == Color.WHITE && isBallIn()) {
+//            Color ballColor = determineColor();
+//            indexerContents.set(indexerIndex, ballColor);
+//            if (isIndexerFull()) {
+//                setIndexerPosition(2);
+//            }
+//        }
 
     }
-    public Color determineColor(){
-        //Evaluate color
-        Color answer = Color.WHITE;
-        //Read the color sensors
-        NormalizedRGBA cs2RgbaNew = cs2.getNormalizedColors();
-        NormalizedRGBA cs3RgbaNew = cs3.getNormalizedColors();
-        double cs2PercentDiffRed = percentDifference(cs2RgbaNew.red, cs2RgbaBase.red);
-        double cs2PercentDiffGreen = percentDifference(cs2RgbaNew.green, cs2RgbaBase.green);
-        double cs2PercentDiffBlue = percentDifference(cs2RgbaNew.blue, cs2RgbaBase.blue);
-        double cs3PercentDiffBlue = percentDifference(cs3RgbaNew.blue, cs3RgbaBase.blue);
-        // Green
-        int greenPoints = 0;
-        if (cs2PercentDiffGreen > cs2PercentDiffBlue && cs2PercentDiffGreen > cs2PercentDiffRed && cs2PercentDiffGreen > 80) {
-            greenPoints++;
-        }
-        if (cs3PercentDiffBlue > 100 && cs3PercentDiffBlue < 160) {
-            greenPoints++;
-        }
-        // purple
-        int purplePoints = 0;
-        if (cs2PercentDiffGreen < cs2PercentDiffBlue && cs2PercentDiffGreen < cs2PercentDiffRed && cs2PercentDiffRed > 80 && cs2PercentDiffBlue > 80) {
-            purplePoints++;
-        }
-        if (cs2PercentDiffBlue > 160) {
-            purplePoints++;
-        }
-        if (greenPoints > 0 || purplePoints > 0) {
-            answer = greenPoints > purplePoints ? Color.GREEN : Color.PURPLE;
-        }
-        return answer;
-    }
-
-    public Color getCurrentColor() {
-        return indexerContents.get(indexerIndex);
-    }
-
-    public boolean isBallIn(){
-        return ((DistanceSensor) cs2).getDistance(DistanceUnit.CM) <STEMperFiConstants.BALL_DETECTION_DISTANCE_CM;
-    }
-
+//    public Color determineColor(){
+//        //Evaluate color
+//        Color answer = Color.WHITE;
+//        //Read the color sensors
+//        NormalizedRGBA cs2RgbaNew = cs2.getNormalizedColors();
+//        NormalizedRGBA cs3RgbaNew = cs3.getNormalizedColors();
+//        double cs2PercentDiffRed = percentDifference(cs2RgbaNew.red, cs2RgbaBase.red);
+//        double cs2PercentDiffGreen = percentDifference(cs2RgbaNew.green, cs2RgbaBase.green);
+//        double cs2PercentDiffBlue = percentDifference(cs2RgbaNew.blue, cs2RgbaBase.blue);
+//        double cs3PercentDiffBlue = percentDifference(cs3RgbaNew.blue, cs3RgbaBase.blue);
+//        // Green
+//        int greenPoints = 0;
+//        if (cs2PercentDiffGreen > cs2PercentDiffBlue && cs2PercentDiffGreen > cs2PercentDiffRed && cs2PercentDiffGreen > 80) {
+//            greenPoints++;
+//        }
+//        if (cs3PercentDiffBlue > 100 && cs3PercentDiffBlue < 160) {
+//            greenPoints++;
+//        }
+//        // purple
+//        int purplePoints = 0;
+//        if (cs2PercentDiffGreen < cs2PercentDiffBlue && cs2PercentDiffGreen < cs2PercentDiffRed && cs2PercentDiffRed > 80 && cs2PercentDiffBlue > 80) {
+//            purplePoints++;
+//        }
+//        if (cs2PercentDiffBlue > 160) {
+//            purplePoints++;
+//        }
+//        if (greenPoints > 0 || purplePoints > 0) {
+//            answer = greenPoints > purplePoints ? Color.GREEN : Color.PURPLE;
+//        }
+//        return answer;
+//    }
+//
+//    public Color getCurrentColor() {
+//        return indexerContents.get(indexerIndex);
+//    }
+//
+//    public boolean isBallIn(){
+//        return ((DistanceSensor) cs2).getDistance(DistanceUnit.CM) <STEMperFiConstants.BALL_DETECTION_DISTANCE_CM;
+//    }
+//
     public boolean isIndexerFull() {
-        return !indexerContents.contains(Color.WHITE);
+        //return !indexerContents.contains(Color.WHITE);
+        return false;
     }
 
     public boolean moveToColor(Color ballColor){
@@ -470,7 +471,7 @@ public class BatBot
             LLResultTypes.FiducialResult fiducialResult = fiducialResults.get(0);
             if (fiducialResult != null) {
                 lastDetect = now;
-                double xDif = fiducialResult.getTargetXDegrees();
+                double xDif = -fiducialResult.getTargetXDegrees();
                 double xPixDif = fiducialResult.getTargetXPixels();
                 double xNoCrossDif = fiducialResult.getTargetXDegreesNoCrosshair();
                 telemetry.addData("Fiducial", "ID: %d, XDeg: %.1f, Xpix: %.1f", fiducialResult.getFiducialId(), xDif, xPixDif);
@@ -479,7 +480,10 @@ public class BatBot
                 return setTurretPower();
             }
         } else if (timeout > 0 && now - lastDetect > timeout) {
+            telemetry.addLine("April Tag not detected.");
+            telemetry.addLine("April Tag not detected.");
             turretTargetPosition = 0;
+            return setTurretPower();
         }
         return false;
     }
