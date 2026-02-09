@@ -6,8 +6,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.Prism.Color;
 
-@TeleOp(name = "Tele Meet 3", group = "Meet3")
-public class Teleop extends OpMode {
+@TeleOp(name = "Hood", group = "util")
+public class Hood extends OpMode {
     private final ElapsedTime runtime = new ElapsedTime();
     public BatBot robot = new BatBot();
 
@@ -55,6 +55,8 @@ public class Teleop extends OpMode {
         // Drive
         robot.mecanumDrive();
 
+        robot.adjustHood();
+
         // SHOOTER
         robot.shoot();
 
@@ -65,12 +67,6 @@ public class Teleop extends OpMode {
 
         // FLYWHEEL
         robot.flywheel();
-
-        if (robot.isBallIn()) {
-            robot.indexerLed.setPosition(STEMperFiConstants.GB_LED_RED);
-        } else {
-            robot.indexerLed.setPosition(STEMperFiConstants.GB_LED_OFF);
-        }
 
         robot.detectGoal(1_000);
 

@@ -51,7 +51,8 @@ public class BatBot
     public GamepadEx gp1, gp2;
 //    public ButtonReader square2ButtonReader, triangle2ButtonReader, circle2ButtonReader, x2ButtonReader, rightBumper2Reader, dUp2ButtonReader, dDown2ButtonReader, dLeft2ButtonReader, dRight2ButtonReader, leftStick2ButtonReader, rightStick2ButtonReader;
     public Servo flipperServo;
-    private Servo indexerServo, indexerLed;
+    public Servo indexerServo, indexerLed, hoodServo;
+    private double hoodPosition = 1.0;
     public double flipperServoPosition = STEMperFiConstants.FLIPPER_INTAKE;
     private double indexerServoPosition = STEMperFiConstants.INDEX_1;
     public boolean intakeOn = false;
@@ -135,6 +136,8 @@ public class BatBot
         fwBotMotor.setVeloCoefficients(FLYWHEEL_kP, 0, 0);
         fwBotMotor.setFeedforwardCoefficients(0, FLYWHEEL_kV);
 
+        hoodServo =  hardwareMap.get(Servo.class, "hood");
+
         flipperServo = hardwareMap.get(Servo.class, "flipper");
         indexerServo = hardwareMap.get(Servo.class, "indexer");
         indexerLed = hardwareMap.get(Servo.class, "indexerLed");
@@ -200,6 +203,7 @@ public class BatBot
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
     }
     public void setIndexerPosition(int index) {
+
         if (index >= 0 && index <=3) {
             double indexerServoPositionNew = STEMperFiConstants.INDEXES.get(index);
             if (indexerServoPositionNew != indexerServoPosition) {
@@ -208,16 +212,35 @@ public class BatBot
                 indexerTimePressed = now;
                 indexerIndex = index;
                 indexMoved = true;
-                Color currentColor = indexerContents.get(indexerIndex);
-                if (currentColor == Color.WHITE) {
-                    indexerLed.setPosition(STEMperFiConstants.GB_LED_WHITE);
-                } else if (currentColor == Color.PURPLE) {
-                    indexerLed.setPosition(STEMperFiConstants.GB_LED_VIOLET);
-                } else {
-                    indexerLed.setPosition(STEMperFiConstants.GB_LED_GREEN);
-                }
+//                Color currentColor = indexerContents.get(indexerIndex);
+//                if (currentColor == Color.WHITE) {
+//                    indexerLed.setPosition(STEMperFiConstants.GB_LED_WHITE);
+//                } else if (currentColor == Color.PURPLE) {
+//                    indexerLed.setPosition(STEMperFiConstants.GB_LED_VIOLET);
+//                } else {
+//                    indexerLed.setPosition(STEMperFiConstants.GB_LED_GREEN);
+//                }
             }
         }
+    }
+
+    public void adjustHood() {
+        if (gp1.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
+            hoodPosition += .1;
+        } else if (gp1.wasJustPressed(GamepadKeys.Button.DPAD_DOWN)) {
+            hoodPosition -= .1;
+        } else if (gp1.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
+            hoodPosition += .01;
+        } else if (gp1.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
+            hoodPosition -= .01;
+        }
+        if (hoodPosition > 1) {
+            hoodPosition = 1;
+        } else if (hoodPosition < 0) {
+            hoodPosition = 0;
+        }
+        telemetry.addData("hood:", hoodPosition);
+        hoodServo.setPosition(hoodPosition);
     }
 
     public void mecanumDrive() {
@@ -347,10 +370,10 @@ public class BatBot
 //        return indexerContents.get(indexerIndex);
 //    }
 //
-//    public boolean isBallIn(){
-//        return ((DistanceSensor) cs2).getDistance(DistanceUnit.CM) <STEMperFiConstants.BALL_DETECTION_DISTANCE_CM;
-//    }
-//
+    public boolean isBallIn(){
+        return ((DistanceSensor) cs2).getDistance(DistanceUnit.CM) <STEMperFiConstants.BALL_DETECTION_DISTANCE_CM;
+    }
+
     public boolean isIndexerFull() {
         //return !indexerContents.contains(Color.WHITE);
         return false;
@@ -374,11 +397,14 @@ public class BatBot
             shooterSpeed = 0;
         } else if (gp2.getButton(GamepadKeys.Button.X)) { // SQUARE
             shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_SHORT;
+            hoodPosition = STEMperFiConstants.HOOD_RELATIVE_ANGLE_SHORT;
         } else if (gp2.getButton(GamepadKeys.Button.Y)) { // TRIANGLE
             shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_MED;
+            hoodPosition = STEMperFiConstants.HOOD_RELATIVE_ANGLE_MED;
         } else if (gp2.getButton(GamepadKeys.Button.B)) { // CIRCLE
             shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_HIGH;
         }
+        hoodServo.setPosition(hoodPosition);
         telemetry.addData("shooterSpeed", shooterSpeed);
         if (shooterSpeed == 0) {
             fwBotMotor.stopMotor();

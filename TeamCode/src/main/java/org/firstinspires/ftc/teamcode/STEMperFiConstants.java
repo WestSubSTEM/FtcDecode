@@ -33,8 +33,8 @@ public class STEMperFiConstants {
     public static final double FLIPPER_SHOOT = .25;
 
     public static final double INDEX_1 = 0.92;
-    public static final double INDEX_2 = 0.48;
-    public static final double INDEX_3 = 0.02 ;
+    public static final double INDEX_2 = 0.47;
+    public static final double INDEX_3 = 0.06 ;
 
     public static final List<Double> INDEXES = Arrays.asList(INDEX_1, INDEX_2, INDEX_3);
 
@@ -70,8 +70,12 @@ public class STEMperFiConstants {
 
     public static final double SHOOT_RELATIVE_POWER_SHORT = .19;
 
-    public static final double SHOOT_RELATIVE_POWER_MED = .23;
-    public static final double SHOOT_RELATIVE_POWER_MED_AUTO = .23;
+    public static final double HOOD_RELATIVE_ANGLE_SHORT = 1;
+
+    public static final double SHOOT_RELATIVE_POWER_MED = .24;
+
+    public static final double HOOD_RELATIVE_ANGLE_MED = .6;
+    public static final double SHOOT_RELATIVE_POWER_MED_AUTO = .24;
     public static final double SHOOT_RELATIVE_POWER_HIGH = 1;
 
     public static final long SHOOT_DELAY_INDEX_MS = 200;
