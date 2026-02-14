@@ -1,17 +1,15 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.Prism.Color;
 
-@TeleOp(name = "Hood", group = "util")
-@Disabled
-public class Hood extends OpMode {
+@TeleOp(name = "Tele QUAL", group = "QUAL")
+public class TeleopFast extends OpMode {
     private final ElapsedTime runtime = new ElapsedTime();
-    public BatBot robot = new BatBot();
+    public BatBotSmart robot = new BatBotSmart();
 
     @Override
     public void init() {
@@ -57,10 +55,7 @@ public class Hood extends OpMode {
         // Drive
         robot.mecanumDrive();
 
-        robot.adjustHood();
 
-        // SHOOTER
-        robot.shoot();
 
         // Indexer
         robot.indexer();
@@ -73,5 +68,8 @@ public class Hood extends OpMode {
         robot.detectGoal(1_000);
 
         robot.setTurretPower();
+
+        // SHOOTER
+        robot.shoot();
     }
 }

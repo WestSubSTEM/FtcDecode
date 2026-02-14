@@ -52,9 +52,9 @@ public class BatBot
 //    public ButtonReader square2ButtonReader, triangle2ButtonReader, circle2ButtonReader, x2ButtonReader, rightBumper2Reader, dUp2ButtonReader, dDown2ButtonReader, dLeft2ButtonReader, dRight2ButtonReader, leftStick2ButtonReader, rightStick2ButtonReader;
     public Servo flipperServo;
     public Servo indexerServo, indexerLed, hoodServo;
-    private double hoodPosition = 1.0;
+    public double hoodPosition = 1.0;
     public double flipperServoPosition = STEMperFiConstants.FLIPPER_INTAKE;
-    private double indexerServoPosition = STEMperFiConstants.INDEX_1;
+    public double indexerServoPosition = STEMperFiConstants.INDEX_1;
     public boolean intakeOn = false;
     public long indexerTimePressed = 0;
     public int indexerIndex = 0;
@@ -63,8 +63,8 @@ public class BatBot
     public boolean shooterTriggerPressed = false;
     public long now = System.currentTimeMillis();
     public List<LynxModule> hubs;
-    private Gamepad gamepad1, gamepad2;
-    private long indexDelayDueToShooting = 0;
+    public Gamepad gamepad1, gamepad2;
+    public long indexDelayDueToShooting = 0;
     public Limelight3A limelight;
     public long lastDetect = 0;
     public String pattern = STEMperFiConstants.PATTERN_21_GPP;
@@ -73,7 +73,7 @@ public class BatBot
 
     public NormalizedRGBA cs2RgbaBase, cs3RgbaBase;
 
-    private Telemetry telemetry;
+    public Telemetry telemetry;
     public void init(HardwareMap hardwareMap, Gamepad gamepad1, Gamepad gamepad2, Telemetry telemetry) {
         this.gamepad1 = gamepad1;
         this.gamepad2 = gamepad2;
@@ -239,7 +239,7 @@ public class BatBot
         } else if (hoodPosition < 0) {
             hoodPosition = 0;
         }
-        telemetry.addData("hood:", hoodPosition);
+        //telemetry.addData("hood:", hoodPosition);
         hoodServo.setPosition(hoodPosition);
     }
 
@@ -405,7 +405,7 @@ public class BatBot
             shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_HIGH;
         }
         hoodServo.setPosition(hoodPosition);
-        telemetry.addData("shooterSpeed", shooterSpeed);
+        //telemetry.addData("shooterSpeed", shooterSpeed);
         if (shooterSpeed == 0) {
             fwBotMotor.stopMotor();
         } else {
@@ -415,8 +415,8 @@ public class BatBot
         if (fwBotMotor.motor.getPower() > .8) {
             fwBotMotor.motor.setPower(.8);
         }
-        telemetry.addData("getPower", getPower);
-        telemetry.update();
+        //telemetry.addData("getPower", getPower);
+        //telemetry.update();
     }
 //    public void manualTurret () {
 //        turretMotor.setRunMode(Motor.RunMode.RawPower);
@@ -453,7 +453,7 @@ public class BatBot
         }
         turretTargetPosition = Math.min(turretTargetPosition, STEMperFiConstants.TURRET_MAX_TICKS);
         turretTargetPosition = Math.max(turretTargetPosition, -STEMperFiConstants.TURRET_MAX_TICKS);
-        telemetry.addData("turretTargetPosition:",turretTargetPosition);
+        //telemetry.addData("turretTargetPosition:",turretTargetPosition);
    }
 
     long nextTurretUpdate = 0;
@@ -466,8 +466,8 @@ public class BatBot
         } else if (newPosition < STEMperFiConstants.TURRET_MIN_TICKS) {
             newPosition = STEMperFiConstants.TURRET_MIN_TICKS;
         }
-        telemetry.addData("turret    cur pos", currentPosition);
-        telemetry.addData("turret target pos", newPosition);
+        //telemetry.addData("turret    cur pos", currentPosition);
+        //telemetry.addData("turret target pos", newPosition);
         turretTargetPosition = newPosition;
     }
 
@@ -484,8 +484,8 @@ public class BatBot
             newTurretPower = 0;
         }
         turretMotor.setPower(newTurretPower);
-        telemetry.addData("current  Pos: ", currentPosition);
-        telemetry.addData("turret Power: ", newTurretPower);
+        //telemetry.addData("current  Pos: ", currentPosition);
+        //telemetry.addData("turret Power: ", newTurretPower);
         return isOnTarget;
     }
 
@@ -500,14 +500,14 @@ public class BatBot
                 double xDif = -fiducialResult.getTargetXDegrees();
                 double xPixDif = fiducialResult.getTargetXPixels();
                 double xNoCrossDif = fiducialResult.getTargetXDegreesNoCrosshair();
-                telemetry.addData("Fiducial", "ID: %d, XDeg: %.1f, Xpix: %.1f", fiducialResult.getFiducialId(), xDif, xPixDif);
-                telemetry.addData("Fiducial", "ID: %d, XnoC: %.1f, Xpix: %.1f", fiducialResult.getFiducialId(), xNoCrossDif, xPixDif);
+                //telemetry.addData("Fiducial", "ID: %d, XDeg: %.1f, Xpix: %.1f", fiducialResult.getFiducialId(), xDif, xPixDif);
+                //telemetry.addData("Fiducial", "ID: %d, XnoC: %.1f, Xpix: %.1f", fiducialResult.getFiducialId(), xNoCrossDif, xPixDif);
                 adjustTurretTargetPosition(xDif);
                 return setTurretPower();
             }
         } else if (timeout > 0 && now - lastDetect > timeout) {
-            telemetry.addLine("April Tag not detected.");
-            telemetry.addLine("April Tag not detected.");
+            //telemetry.addLine("April Tag not detected.");
+            //telemetry.addLine("April Tag not detected.");
             turretTargetPosition = 0;
             return setTurretPower();
         }

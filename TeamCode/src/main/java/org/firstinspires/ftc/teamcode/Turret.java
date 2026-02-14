@@ -1,11 +1,13 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.bylazar.configurables.annotations.Configurable;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Configurable
+@Disabled
 @TeleOp(name = "Turret adjust self", group = "util")
 public class Turret extends OpMode {
     private final ElapsedTime runtime = new ElapsedTime();
