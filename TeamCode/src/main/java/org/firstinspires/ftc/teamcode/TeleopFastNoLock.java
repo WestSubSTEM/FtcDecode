@@ -6,8 +6,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.Prism.Color;
 
-@TeleOp(name = "Tele QUAL", group = "QUAL")
-public class TeleopFast extends OpMode {
+@TeleOp(name = "Tele QUAL No Lock", group = "QUAL")
+public class TeleopFastNoLock extends OpMode {
     private final ElapsedTime runtime = new ElapsedTime();
     public BatBotSmart robot = new BatBotSmart();
 
@@ -70,6 +70,6 @@ public class TeleopFast extends OpMode {
         robot.setTurretPower();
 
         // SHOOTER
-        robot.shoot();
+        robot.shootNoLock();
     }
 }

@@ -88,7 +88,7 @@ public class AutoRed extends LinearOpMode
             telemetry.addData(">", "Robot Heading = %4.0f", robot.odo.getHeading(AngleUnit.DEGREES));
             telemetry.update();
             robot.startLoop();
-            robot.indexer();
+            robot.indexer(true);
         }
         runtime.reset();
         robot.limelight.start();

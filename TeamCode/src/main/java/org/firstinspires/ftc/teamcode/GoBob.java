@@ -1,5 +1,6 @@
 
 package org.firstinspires.ftc.teamcode;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.bylazar.configurables.annotations.Configurable;
@@ -11,7 +12,7 @@ import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.geometry.Pose;
-
+@Disabled
 @Autonomous(name = "Pedro Pathing Test", group = "Autonomous")
 @Configurable // Panels
 public class GoBob extends OpMode {
@@ -46,10 +47,10 @@ public class GoBob extends OpMode {
         panelsTelemetry.update(telemetry);
     }
 
-@Override
-public void start() {
-        follower.followPath(paths.Path4, 0.3, true);
-}
+    @Override
+    public void start() {
+            follower.followPath(paths.Path4, 0.3, true);
+    }
 
     static class Paths {
         public PathChain Path1;

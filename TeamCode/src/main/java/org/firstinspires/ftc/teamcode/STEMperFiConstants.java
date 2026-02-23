@@ -33,9 +33,9 @@ public class STEMperFiConstants {
     public static final double FLIPPER_INTAKE = 0.52;
     public static final double FLIPPER_SHOOT = .25;
 
-    public static final double INDEX_1 = 0.92;
-    public static final double INDEX_2 = 0.47;
-    public static final double INDEX_3 = 0.06 ;
+    public static final double INDEX_1 = .8;
+    public static final double INDEX_2 = .4;
+    public static final double INDEX_3 = 0.02;
 
     public static final List<Double> INDEXES = Arrays.asList(INDEX_1, INDEX_2, INDEX_3);
 

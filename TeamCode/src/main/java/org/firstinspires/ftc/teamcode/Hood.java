@@ -63,7 +63,7 @@ public class Hood extends OpMode {
         robot.shoot();
 
         // Indexer
-        robot.indexer();
+        robot.indexer(false);
         // INTAKE
         robot.intake();
 

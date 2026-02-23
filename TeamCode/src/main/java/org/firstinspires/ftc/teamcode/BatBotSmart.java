@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.bylazar.configurables.annotations.Configurable;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -37,6 +38,10 @@ public long indexerMoveDelay = 0;
         }
     }
 
+    public boolean isIndexerMoving() {
+        return now < indexerMoveDelay;
+    }
+
     public void startLoop() {
         super.startLoop();
         telemetry.addData("index", indexerIndex);
@@ -60,6 +65,7 @@ public long indexerMoveDelay = 0;
     public void shoot() {
         if (!intakeOn && now > indexerMoveDelay && !isIndexerEmpty()) {
             if (now > flipperDownDelay && shootPressed > 0) {
+                telemetry.addLine("flipper down");
                 shootPressed = 0;
                 if (isIndexerEmpty()) {
                     if (indexerIndex != 0) {
@@ -71,11 +77,16 @@ public long indexerMoveDelay = 0;
                 return;
             }
             if (now > flipperUpDelay && shootPressed > 0) {
+                telemetry.addLine("flipper up");
                 indexerContents.set(indexerIndex, Color.WHITE);
                 flipperServoPosition = STEMperFiConstants.FLIPPER_INTAKE;
                 flipperServo.setPosition(flipperServoPosition);
                 return;
             }
+            telemetry.addData("shooterTriggerPressed", shooterTriggerPressed);
+            telemetry.addData("shootPressed", shootPressed);
+            telemetry.addData("isOnTarget", isOnTarget);
+            telemetry.addData("lastDetect", now);
             if (shooterTriggerPressed && shootPressed == 0 && isOnTarget && lastDetect == now) {
                 if (indexerContents.get(indexerIndex) == Color.WHITE) {
                     if (indexerContents.get(2) != Color.WHITE) {
@@ -98,24 +109,61 @@ public long indexerMoveDelay = 0;
         }
     }
 
+    public void shootNoLock() {
+        if (!intakeOn && now > indexerMoveDelay && !isIndexerEmpty()) {
+            if (now > flipperDownDelay && shootPressed > 0) {
+                telemetry.addLine("flipper down");
+                shootPressed = 0;
+                if (isIndexerEmpty()) {
+                    if (indexerIndex != 0) {
+                        setIndexerPosition(0);
+                    }
+                    return;
+                }
+                setIndexerPosition(indexerIndex - 1);
+                return;
+            }
+            if (now > flipperUpDelay && shootPressed > 0) {
+                telemetry.addLine("flipper up");
+                indexerContents.set(indexerIndex, Color.WHITE);
+                flipperServoPosition = STEMperFiConstants.FLIPPER_INTAKE;
+                flipperServo.setPosition(flipperServoPosition);
+                return;
+            }
+            telemetry.addData("shooterTriggerPressed", shooterTriggerPressed);
+            telemetry.addData("shootPressed", shootPressed);
+            telemetry.addData("isOnTarget", isOnTarget);
+            telemetry.addData("lastDetect", now);
+            if (shooterTriggerPressed && shootPressed == 0) {
+                shootPressed = now;
+                flipperUpDelay = now + 500;
+                flipperDownDelay = now + (500 * 2);
+                flipperServoPosition = STEMperFiConstants.FLIPPER_SHOOT;
+                flipperServo.setPosition(flipperServoPosition);
+            }
+        } else if (isIndexerEmpty() && indexerIndex != 0) {
+            setIndexerPosition(0);
+        }
+    }
+
     @Override
-    public void indexer() {
+    public void indexer(boolean isInit) {
         // INDEXER
         if (!shooterTriggerPressed && now > indexDelayDueToShooting) {
             if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
-                if (isIndexerEmpty()) {
+                if (isIndexerEmpty() && !isInit) {
                     gamepad2.runRumbleEffect(customRumbleEffect);
                     return;
                 }
                 setIndexerPosition(1);
             } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
-                if (isIndexerEmpty()) {
+                if (isIndexerEmpty() && !isInit) {
                     gamepad2.runRumbleEffect(customRumbleEffect);
                     return;
                 }
                 setIndexerPosition(0);
             } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
-                if (isIndexerEmpty()) {
+                if (isIndexerEmpty() && !isInit) {
                     gamepad2.runRumbleEffect(customRumbleEffect);
                     return;
                 }

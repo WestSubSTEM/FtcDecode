@@ -294,7 +294,7 @@ public class BatBot
         flipperServo.setPosition(flipperServoPosition);
     }
 
-    public void indexer() {
+    public void indexer(boolean isInit) {
         // INDEXER
         if (!shooterTriggerPressed && now > indexDelayDueToShooting) {
             if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
