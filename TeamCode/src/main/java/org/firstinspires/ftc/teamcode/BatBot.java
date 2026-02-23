@@ -334,12 +334,15 @@ public class BatBot
 //        }
 
     }
-//    public Color determineColor(){
-//        //Evaluate color
-//        Color answer = Color.WHITE;
-//        //Read the color sensors
-//        NormalizedRGBA cs2RgbaNew = cs2.getNormalizedColors();
-//        NormalizedRGBA cs3RgbaNew = cs3.getNormalizedColors();
+    public Color determineColor(){
+        //Evaluate color
+        Color answer = Color.WHITE;
+        //Read the color sensors
+        NormalizedRGBA cs2RgbaNew = cs2.getNormalizedColors();
+        NormalizedRGBA cs3RgbaNew = cs3.getNormalizedColors();
+
+        telemetry.addLine("cs2.toColor: " + cs2RgbaNew.toColor() + ", cs2.a: " + cs2RgbaNew.alpha + ", cs2.r: " + cs2RgbaNew.red + ", cs2.g: " + cs2RgbaNew.green + ", cs2.b: " + cs2RgbaNew.blue);
+        telemetry.addLine("cs3.toColor: " + cs3RgbaNew.toColor() + ", cs3.a: " + cs3RgbaNew.alpha + ", cs3.r: " + cs3RgbaNew.red + ", cs3.g: " + cs3RgbaNew.green + ", cs3.b: " + cs3RgbaNew.blue);
 //        double cs2PercentDiffRed = percentDifference(cs2RgbaNew.red, cs2RgbaBase.red);
 //        double cs2PercentDiffGreen = percentDifference(cs2RgbaNew.green, cs2RgbaBase.green);
 //        double cs2PercentDiffBlue = percentDifference(cs2RgbaNew.blue, cs2RgbaBase.blue);
@@ -363,9 +366,9 @@ public class BatBot
 //        if (greenPoints > 0 || purplePoints > 0) {
 //            answer = greenPoints > purplePoints ? Color.GREEN : Color.PURPLE;
 //        }
-//        return answer;
-//    }
-//
+        return answer;
+    }
+
 //    public Color getCurrentColor() {
 //        return indexerContents.get(indexerIndex);
 //    }

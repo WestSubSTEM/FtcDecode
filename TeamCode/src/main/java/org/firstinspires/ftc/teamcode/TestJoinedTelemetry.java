@@ -4,8 +4,14 @@ package org.firstinspires.ftc.teamcode;
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.JoinedTelemetry;
 import com.bylazar.telemetry.PanelsTelemetry;
+import com.qualcomm.hardware.rev.RevTouchSensor;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
+
+import org.firstinspires.ftc.robotcontroller.external.samples.SensorDigitalTouch;
 
 @Configurable
 @TeleOp(name = "Test Joined Telemetry", group = "Dev")
@@ -15,8 +21,24 @@ public class TestJoinedTelemetry extends OpMode {
     public static int CHANGE_ME_NOT_VOLATILE = 0;
     JoinedTelemetry joinedTelemetry = new JoinedTelemetry(this.telemetry, PanelsTelemetry.INSTANCE.getFtcTelemetry());
 
+    Servo pinkLed, blueLed, yellowLed;
+
+    DigitalChannel dis0;
+
+
     @Override
     public void init() {
+        blueLed =  hardwareMap.get(Servo.class, "blueLed");
+        pinkLed =  hardwareMap.get(Servo.class, "pinkLed");
+        yellowLed =  hardwareMap.get(Servo.class, "yellowLed");
+        // Get the digital sensor from the hardware map
+        dis0 = hardwareMap.get(DigitalChannel.class, "distance0");
+
+        // Set the channel as an input
+        dis0.setMode(DigitalChannel.Mode.INPUT);
+        blueLed.setPosition(STEMperFiConstants.GB_LED_WHITE);
+        pinkLed.setPosition(STEMperFiConstants.GB_LED_WHITE);
+        yellowLed.setPosition(STEMperFiConstants.GB_LED_WHITE);
         joinedTelemetry.addLine("init");
         joinedTelemetry.update();
     }
@@ -24,6 +46,7 @@ public class TestJoinedTelemetry extends OpMode {
     @Override
     public void loop() {
         joinedTelemetry.addData("Counter", COUNTER);
+        joinedTelemetry.addData("d0", dis0.getState());
         TestJoinedTelemetry.COUNTER++;
         int x = 3;
         for (int i = 0; i < 10_000; i++) {

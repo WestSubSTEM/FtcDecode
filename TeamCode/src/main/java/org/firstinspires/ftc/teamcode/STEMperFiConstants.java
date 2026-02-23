@@ -52,6 +52,8 @@ public class STEMperFiConstants {
 
     public static final double GB_LED_OFF = 0;
     public static final double GB_LED_RED = 0.28;
+    public static final double GB_LED_PINKISH = 0.3;
+
     public static final double GB_LED_ORANGE = 0.333;
     public static final double GB_LED_YELLOW = 0.388;
     public static final double GB_LED_SAGE = 0.444;
