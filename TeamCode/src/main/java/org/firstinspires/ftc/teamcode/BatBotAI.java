@@ -474,7 +474,7 @@ public class BatBotAI
         }
 
         // Example toggle: Triangle press toggles autoDistanceShot
-        if (gp2.wasJustPressed(GamepadKeys.Button.Y)) {
+        if (gp2.wasJustPressed(GamepadKeys.Button.B)) {
             autoDistanceShot = !autoDistanceShot;
         }
 
