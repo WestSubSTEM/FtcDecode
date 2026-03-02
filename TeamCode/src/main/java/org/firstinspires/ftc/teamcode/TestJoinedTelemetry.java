@@ -4,11 +4,9 @@ package org.firstinspires.ftc.teamcode;
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.JoinedTelemetry;
 import com.bylazar.telemetry.PanelsTelemetry;
-import com.qualcomm.hardware.rev.RevTouchSensor;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcontroller.external.samples.SensorDigitalTouch;
@@ -23,7 +21,7 @@ public class TestJoinedTelemetry extends OpMode {
 
     Servo pinkLed, blueLed, yellowLed;
 
-    DigitalChannel dis0;
+    DigitalChannel laserLeft, laserRight;
 
 
     @Override
@@ -32,13 +30,15 @@ public class TestJoinedTelemetry extends OpMode {
         pinkLed =  hardwareMap.get(Servo.class, "pinkLed");
         yellowLed =  hardwareMap.get(Servo.class, "yellowLed");
         // Get the digital sensor from the hardware map
-        dis0 = hardwareMap.get(DigitalChannel.class, "distance0");
-
+        laserRight = hardwareMap.get(DigitalChannel.class, "laser_right");
         // Set the channel as an input
-        dis0.setMode(DigitalChannel.Mode.INPUT);
-        blueLed.setPosition(STEMperFiConstants.GB_LED_WHITE);
-        pinkLed.setPosition(STEMperFiConstants.GB_LED_WHITE);
-        yellowLed.setPosition(STEMperFiConstants.GB_LED_WHITE);
+        laserRight.setMode(DigitalChannel.Mode.INPUT);
+        laserLeft = hardwareMap.get(DigitalChannel.class, "laser_left");
+        // Set the channel as an input
+        laserLeft.setMode(DigitalChannel.Mode.INPUT);
+        blueLed.setPosition(STEMperFiConstants.GB_LED_PURPLE);
+        pinkLed.setPosition(STEMperFiConstants.GB_LED_GREEN);
+        yellowLed.setPosition(STEMperFiConstants.GB_LED_GREEN);
         joinedTelemetry.addLine("init");
         joinedTelemetry.update();
     }
@@ -46,7 +46,8 @@ public class TestJoinedTelemetry extends OpMode {
     @Override
     public void loop() {
         joinedTelemetry.addData("Counter", COUNTER);
-        joinedTelemetry.addData("d0", dis0.getState());
+        joinedTelemetry.addData("lr", laserRight.getState());
+        joinedTelemetry.addData("lf", laserLeft.getState());
         TestJoinedTelemetry.COUNTER++;
         int x = 3;
         for (int i = 0; i < 10_000; i++) {

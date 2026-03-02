@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode;
 
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.bylazar.configurables.annotations.Configurable;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 
@@ -43,7 +42,7 @@ public long indexerMoveDelay = 0;
                 indexerServoPosition = indexerServoPositionNew;
                 indexerServo.setPosition(indexerServoPosition);
                 indexerTimePressed = now;
-                indexerMoveDelay = now + STEMperFiConstants.INTAKE_DURING_INDEXER_MOVE_MS;
+                indexerMoveDelay = now + STEMperFiConstants.INTAKE_DURING_INDEXER_MOVE_DELAY_MS;
                 indexerIndex = index;
                 indexMoved = true;
             }
@@ -250,18 +249,19 @@ public long indexerMoveDelay = 0;
                 setIndexerPosition(nextEmptySlot());
             }
         }
+        ballLatchedPrev = ballLatched;
     }
 
     public void setInderLed() {
         Color currentColor = indexerContents.get(indexerIndex);
         if (currentColor == Color.RED) {
-            indexerLed.setPosition(STEMperFiConstants.GB_LED_RED);
+           // indexerLed.setPosition(STEMperFiConstants.GB_LED_RED);
         } else if (currentColor == Color.BLUE) {
-            indexerLed.setPosition(STEMperFiConstants.GB_LED_BLUE);
+           // indexerLed.setPosition(STEMperFiConstants.GB_LED_BLUE);
         } else if (currentColor == Color.YELLOW) {
-            indexerLed.setPosition(STEMperFiConstants.GB_LED_YELLOW);
+           // indexerLed.setPosition(STEMperFiConstants.GB_LED_YELLOW);
         } else {
-            indexerLed.setPosition(STEMperFiConstants.GB_LED_WHITE);
+           // indexerLed.setPosition(STEMperFiConstants.GB_LED_WHITE);
         }
     }
 
@@ -346,7 +346,7 @@ public long indexerMoveDelay = 0;
         } else {
             emptyStableLoops = 0;
         }
-        ballLatchedPrev = ballLatched;
+
     }
 
 

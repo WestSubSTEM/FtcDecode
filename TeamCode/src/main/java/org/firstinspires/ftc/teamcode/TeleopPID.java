@@ -212,7 +212,7 @@ public class TeleopPID extends OpMode {
 
         double leftTrigger = gp2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER);
         double intakePower = 0;
-        if (intakeOn || shootButtonPressed || ((now - serverIndexPressTimeMS) < STEMperFiConstants.INTAKE_DURING_INDEXER_MOVE_MS)) {
+        if (intakeOn || shootButtonPressed || ((now - serverIndexPressTimeMS) < STEMperFiConstants.INTAKE_DURING_INDEXER_MOVE_DELAY_MS)) {
             intakePower = 1;
         } else if (leftTrigger > 0.2) {
             intakePower = -leftTrigger;

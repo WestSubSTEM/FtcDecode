@@ -6,6 +6,7 @@ import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.bylazar.configurables.annotations.Configurable;
+import com.bylazar.telemetry.JoinedTelemetry;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
@@ -13,6 +14,7 @@ import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -21,20 +23,18 @@ import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.SwitchableLight;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.Prism.Color;
 import org.firstinspires.ftc.teamcode.Prism.GoBildaPrismDriver;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Configurable
 public class BatBot
 {
     NormalizedColorSensor cs3, cs2;
-    public List<Color> indexerContents = Arrays.asList(Color.WHITE, Color.WHITE, Color.WHITE);
+    public double[] indexerContents = new double[] {STEMperFiConstants.GB_LED_OFF, STEMperFiConstants.GB_LED_OFF, STEMperFiConstants.GB_LED_OFF};
 
     public GoBildaPrismDriver prism;
     public static volatile double FLYWHEEL_kP = 20.0;
@@ -51,7 +51,9 @@ public class BatBot
     public GamepadEx gp1, gp2;
 //    public ButtonReader square2ButtonReader, triangle2ButtonReader, circle2ButtonReader, x2ButtonReader, rightBumper2Reader, dUp2ButtonReader, dDown2ButtonReader, dLeft2ButtonReader, dRight2ButtonReader, leftStick2ButtonReader, rightStick2ButtonReader;
     public Servo flipperServo;
-    public Servo indexerServo, indexerLed, hoodServo;
+    public Servo indexerServo, hoodServo;
+    public Servo pinkLed, blueLed, yellowLed;
+    public Servo[] indexerLeds;
     public double hoodPosition = 1.0;
     public double flipperServoPosition = STEMperFiConstants.FLIPPER_INTAKE;
     public double indexerServoPosition = STEMperFiConstants.INDEX_1;
@@ -68,16 +70,19 @@ public class BatBot
     public Limelight3A limelight;
     public long lastDetect = 0;
     public String pattern = STEMperFiConstants.PATTERN_21_GPP;
-
+    DigitalChannel laserLeft, laserRight;
     public boolean indexMoved = false;
-
     public NormalizedRGBA cs2RgbaBase, cs3RgbaBase;
+    public long indexerMoveDelay = 0;
 
-    public Telemetry telemetry;
-    public void init(HardwareMap hardwareMap, Gamepad gamepad1, Gamepad gamepad2, Telemetry telemetry) {
+    public final float[] hsvValues2 = new float[3];
+    public final float[] hsvValues3 = new float[3];
+    JoinedTelemetry joinedTelemetry;
+    public void init(HardwareMap hardwareMap, Gamepad gamepad1, Gamepad gamepad2, JoinedTelemetry joinedTelemetry) {
+        this.joinedTelemetry = joinedTelemetry;
+
         this.gamepad1 = gamepad1;
         this.gamepad2 = gamepad2;
-        this.telemetry = telemetry;
 
         customRumbleEffect = new Gamepad.RumbleEffect.Builder()
                 .addStep(1.0, 1.0, 500)  //  Rumble left motor 100% for 250 mSec
@@ -140,7 +145,10 @@ public class BatBot
 
         flipperServo = hardwareMap.get(Servo.class, "flipper");
         indexerServo = hardwareMap.get(Servo.class, "indexer");
-        indexerLed = hardwareMap.get(Servo.class, "indexerLed");
+        blueLed =  hardwareMap.get(Servo.class, "blueLed");
+        pinkLed =  hardwareMap.get(Servo.class, "pinkLed");
+        yellowLed =  hardwareMap.get(Servo.class, "yellowLed");
+        indexerLeds = new Servo[] {blueLed, pinkLed, yellowLed};
 
         turretMotor = hardwareMap.get(DcMotorEx.class, "lazy");
         turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -201,27 +209,55 @@ public class BatBot
         //odo.resetPosAndIMU();
 
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
-    }
-    public void setIndexerPosition(int index) {
 
-        if (index >= 0 && index <=3) {
-            double indexerServoPositionNew = STEMperFiConstants.INDEXES.get(index);
+        laserLeft = hardwareMap.get(DigitalChannel.class, "laser_left");
+        laserLeft.setMode(DigitalChannel.Mode.INPUT);
+        laserRight = hardwareMap.get(DigitalChannel.class, "laser_right");
+        laserRight.setMode(DigitalChannel.Mode.INPUT);
+    }
+    public void setIndexerPosition(int indexNew) {
+        joinedTelemetry.addData("setIndexerPosition: ",  indexNew);
+        if (indexNew == -1) {
+            indexNew = 2;
+        } else if (indexNew == 3) {
+            indexNew = 0;
+        }
+        if (indexNew >= 0 && indexNew < 3) {
+            double indexerServoPositionNew = STEMperFiConstants.INDEXES.get(indexNew);
             if (indexerServoPositionNew != indexerServoPosition) {
                 indexerServoPosition = indexerServoPositionNew;
                 indexerServo.setPosition(indexerServoPosition);
                 indexerTimePressed = now;
-                indexerIndex = index;
+                indexerMoveDelay = now + STEMperFiConstants.INTAKE_DURING_INDEXER_MOVE_DELAY_MS;
+                indexerIndex = indexNew;
                 indexMoved = true;
-//                Color currentColor = indexerContents.get(indexerIndex);
-//                if (currentColor == Color.WHITE) {
-//                    indexerLed.setPosition(STEMperFiConstants.GB_LED_WHITE);
-//                } else if (currentColor == Color.PURPLE) {
-//                    indexerLed.setPosition(STEMperFiConstants.GB_LED_VIOLET);
-//                } else {
-//                    indexerLed.setPosition(STEMperFiConstants.GB_LED_GREEN);
-//                }
             }
         }
+    }
+    public void setIndexerLeds() {
+        indexerLeds[0].setPosition(indexerContents[0]);
+        indexerLeds[1].setPosition(indexerContents[1]);
+        indexerLeds[2].setPosition(indexerContents[2]);
+    }
+    public boolean isIndexerMoving() {
+        return now < indexerMoveDelay;
+    }
+    public boolean isShooting() {
+        return now < indexDelayDueToShooting;
+    }
+
+    public String getColorChar(double colorVal) {
+        if (colorVal == STEMperFiConstants.GB_LED_PURPLE) {
+            return "P";
+        }
+        if (colorVal == STEMperFiConstants.GB_LED_GREEN) {
+            return "G";
+        }
+        return "_";
+    }
+
+    public String getColorString() {
+        return getColorChar(indexerContents[0]) + getColorChar(indexerContents[1])  + getColorChar(indexerContents[2]) ;
     }
 
     public void adjustHood() {
@@ -278,11 +314,13 @@ public class BatBot
         // Refer to https://gm0.org/en/latest/docs/software/control-system-internals.html#bulk-reads
         // for more information on bulk reads.
         hubs.forEach(LynxModule::clearBulkCache);
-
         now = System.currentTimeMillis();
         gp1.readButtons();
         gp2.readButtons();
         shooterTriggerPressed = gp2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.2;
+        joinedTelemetry.addData("index", indexerIndex);
+        joinedTelemetry.addData("colors", getColorString());
+        setIndexerLeds();
     }
 
     public void shoot() {
@@ -296,7 +334,7 @@ public class BatBot
 
     public void indexer(boolean isInit) {
         // INDEXER
-        if (!shooterTriggerPressed && now > indexDelayDueToShooting) {
+        if (!shooterTriggerPressed && !isShooting()) {
             if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
                 setIndexerPosition(1);
             } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
@@ -310,39 +348,37 @@ public class BatBot
       return oldValue != 0 ? 100 * (newValue - oldValue) / oldValue : 0;
     }
     public void intake() {
-        if (isIndexerFull()) {
-            intakeOn = false;
-        } else if (gp2.wasJustPressed(GamepadKeys.Button.RIGHT_BUMPER)) {
+        if (gp2.wasJustPressed(GamepadKeys.Button.RIGHT_BUMPER)) {
             intakeOn = !intakeOn;
         }
 
         double leftTrigger = gp2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER);
         double intakePower = 0;
-        if (intakeOn || shooterTriggerPressed || ((now - indexerTimePressed) < STEMperFiConstants.INTAKE_DURING_INDEXER_MOVE_MS)) {
+        if (intakeOn || isShooting() || isIndexerMoving()) {
             intakePower = 1;
         } else if (leftTrigger > 0.2) {
             intakePower = -leftTrigger;
         }
         intakeMotor.setPower(intakePower);
-
-//        if (indexerContents.get(indexerIndex) == Color.WHITE && isBallIn()) {
-//            Color ballColor = determineColor();
-//            indexerContents.set(indexerIndex, ballColor);
-//            if (isIndexerFull()) {
-//                setIndexerPosition(2);
-//            }
-//        }
-
     }
-    public Color determineColor(){
+    public double determineColor(){
         //Evaluate color
         Color answer = Color.WHITE;
         //Read the color sensors
         NormalizedRGBA cs2RgbaNew = cs2.getNormalizedColors();
         NormalizedRGBA cs3RgbaNew = cs3.getNormalizedColors();
 
-        telemetry.addLine("cs2.toColor: " + cs2RgbaNew.toColor() + ", cs2.a: " + cs2RgbaNew.alpha + ", cs2.r: " + cs2RgbaNew.red + ", cs2.g: " + cs2RgbaNew.green + ", cs2.b: " + cs2RgbaNew.blue);
-        telemetry.addLine("cs3.toColor: " + cs3RgbaNew.toColor() + ", cs3.a: " + cs3RgbaNew.alpha + ", cs3.r: " + cs3RgbaNew.red + ", cs3.g: " + cs3RgbaNew.green + ", cs3.b: " + cs3RgbaNew.blue);
+        android.graphics.Color.colorToHSV(cs2RgbaNew.toColor(), hsvValues2);
+        android.graphics.Color.colorToHSV(cs3RgbaNew.toColor(), hsvValues3);
+        joinedTelemetry.addLine("cs2.toColor: " + cs2RgbaNew.toColor() + ", cs2.a: " + cs2RgbaNew.alpha + ", cs2.r: " + cs2RgbaNew.red + ", cs2.g: " + cs2RgbaNew.green + ", cs2.b: " + cs2RgbaNew.blue);
+        joinedTelemetry.addLine("cs3.toColor: " + cs3RgbaNew.toColor() + ", cs3.a: " + cs3RgbaNew.alpha + ", cs3.r: " + cs3RgbaNew.red + ", cs3.g: " + cs3RgbaNew.green + ", cs3.b: " + cs3RgbaNew.blue);
+
+        if (cs2RgbaNew.red > .1) {
+            return STEMperFiConstants.GB_LED_PURPLE;
+        }
+        return STEMperFiConstants.GB_LED_GREEN;
+
+
 //        double cs2PercentDiffRed = percentDifference(cs2RgbaNew.red, cs2RgbaBase.red);
 //        double cs2PercentDiffGreen = percentDifference(cs2RgbaNew.green, cs2RgbaBase.green);
 //        double cs2PercentDiffBlue = percentDifference(cs2RgbaNew.blue, cs2RgbaBase.blue);
@@ -366,30 +402,53 @@ public class BatBot
 //        if (greenPoints > 0 || purplePoints > 0) {
 //            answer = greenPoints > purplePoints ? Color.GREEN : Color.PURPLE;
 //        }
-        return answer;
     }
 
-//    public Color getCurrentColor() {
-//        return indexerContents.get(indexerIndex);
-//    }
-//
-    public boolean isBallIn(){
-        return ((DistanceSensor) cs2).getDistance(DistanceUnit.CM) <STEMperFiConstants.BALL_DETECTION_DISTANCE_CM;
+    public double getCurrentColor() {
+        return indexerContents[indexerIndex];
+    }
+
+
+    public int intakeDetectCycleCount = 0;
+    public boolean isBallIn() {
+        if (intakeOn && !isIndexerMoving()) {
+            int sensorCount = (((DistanceSensor) cs2).getDistance(DistanceUnit.CM) < STEMperFiConstants.BALL_DETECTION_DISTANCE_CM) ? 1 : 0;
+            sensorCount += laserLeft.getState() ? 1 : 0;
+            sensorCount += laserRight.getState() ? 1 : 0;
+            if (sensorCount >= 2) {
+                intakeDetectCycleCount++;
+            } else {
+                intakeDetectCycleCount = 0;
+            }
+        } else {
+            intakeDetectCycleCount = 0;
+        }
+        return intakeDetectCycleCount >= STEMperFiConstants.INTAKE_CYCLE_COUNT_BALL_IS_IN;
     }
 
     public boolean isIndexerFull() {
-        //return !indexerContents.contains(Color.WHITE);
-        return false;
+        return  indexerContents[0] != STEMperFiConstants.GB_LED_OFF &&
+                indexerContents[1] != STEMperFiConstants.GB_LED_OFF &&
+                indexerContents[2] != STEMperFiConstants.GB_LED_OFF;
     }
 
-    public boolean moveToColor(Color ballColor){
-        int ballColorIndex=indexerContents.indexOf(ballColor);
-        if (ballColorIndex==-1){
-            return false;
-        }
-        setIndexerPosition(ballColorIndex);
-        return true;
+    public boolean isIndexerEmpty() {
+        return  indexerContents[0] == STEMperFiConstants.GB_LED_OFF &&
+                indexerContents[1] == STEMperFiConstants.GB_LED_OFF &&
+                indexerContents[2] == STEMperFiConstants.GB_LED_OFF;
     }
+    public int nextEmptySlot() {
+        if (indexerContents[2] == STEMperFiConstants.GB_LED_OFF) {
+            return 2;
+        }
+        if (indexerContents[1] == STEMperFiConstants.GB_LED_OFF) {
+            return 1;
+        }
+        return 0;
+    }
+
+
+
 
     public void flywheel() {
 //        square2ButtonReader = new ButtonReader(gp2, GamepadKeys.Button.X);
@@ -408,7 +467,7 @@ public class BatBot
             shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_HIGH;
         }
         hoodServo.setPosition(hoodPosition);
-        //telemetry.addData("shooterSpeed", shooterSpeed);
+        //joinedTelemetry.addData("shooterSpeed", shooterSpeed);
         if (shooterSpeed == 0) {
             fwBotMotor.stopMotor();
         } else {
@@ -418,8 +477,8 @@ public class BatBot
         if (fwBotMotor.motor.getPower() > .8) {
             fwBotMotor.motor.setPower(.8);
         }
-        //telemetry.addData("getPower", getPower);
-        //telemetry.update();
+        //joinedTelemetry.addData("getPower", getPower);
+        //joinedTelemetry.update();
     }
 //    public void manualTurret () {
 //        turretMotor.setRunMode(Motor.RunMode.RawPower);
@@ -435,9 +494,9 @@ public class BatBot
 //        } else if (gp2.wasJustPressed(GamepadKeys.Button.LEFT_STICK_BUTTON)) {
 //            turretMotor.set(0);
 //        }
-//        telemetry.addData("turret pow: ", turretMotor.get());
-//        telemetry.addData("turret pos: ", turretMotor.getCurrentPosition());
-//        telemetry.addData("turret ang", turretMotor.getCurrentPosition()/ STEMperFiConstants.TURRET_TICKS_PER_DEGREE );
+//        joinedTelemetry.addData("turret pow: ", turretMotor.get());
+//        joinedTelemetry.addData("turret pos: ", turretMotor.getCurrentPosition());
+//        joinedTelemetry.addData("turret ang", turretMotor.getCurrentPosition()/ STEMperFiConstants.TURRET_TICKS_PER_DEGREE );
 //    }
 
     public void calibrateTurret () {
@@ -456,7 +515,7 @@ public class BatBot
         }
         turretTargetPosition = Math.min(turretTargetPosition, STEMperFiConstants.TURRET_MAX_TICKS);
         turretTargetPosition = Math.max(turretTargetPosition, -STEMperFiConstants.TURRET_MAX_TICKS);
-        //telemetry.addData("turretTargetPosition:",turretTargetPosition);
+        //joinedTelemetry.addData("turretTargetPosition:",turretTargetPosition);
    }
 
     long nextTurretUpdate = 0;
@@ -469,8 +528,8 @@ public class BatBot
         } else if (newPosition < STEMperFiConstants.TURRET_MIN_TICKS) {
             newPosition = STEMperFiConstants.TURRET_MIN_TICKS;
         }
-        //telemetry.addData("turret    cur pos", currentPosition);
-        //telemetry.addData("turret target pos", newPosition);
+        //joinedTelemetry.addData("turret    cur pos", currentPosition);
+        //joinedTelemetry.addData("turret target pos", newPosition);
         turretTargetPosition = newPosition;
     }
 
@@ -487,8 +546,8 @@ public class BatBot
             newTurretPower = 0;
         }
         turretMotor.setPower(newTurretPower);
-        //telemetry.addData("current  Pos: ", currentPosition);
-        //telemetry.addData("turret Power: ", newTurretPower);
+        //joinedTelemetry.addData("current  Pos: ", currentPosition);
+        //joinedTelemetry.addData("turret Power: ", newTurretPower);
         return isOnTarget;
     }
 
@@ -503,14 +562,14 @@ public class BatBot
                 double xDif = -fiducialResult.getTargetXDegrees();
                 double xPixDif = fiducialResult.getTargetXPixels();
                 double xNoCrossDif = fiducialResult.getTargetXDegreesNoCrosshair();
-                //telemetry.addData("Fiducial", "ID: %d, XDeg: %.1f, Xpix: %.1f", fiducialResult.getFiducialId(), xDif, xPixDif);
-                //telemetry.addData("Fiducial", "ID: %d, XnoC: %.1f, Xpix: %.1f", fiducialResult.getFiducialId(), xNoCrossDif, xPixDif);
+                //joinedTelemetry.addData("Fiducial", "ID: %d, XDeg: %.1f, Xpix: %.1f", fiducialResult.getFiducialId(), xDif, xPixDif);
+                //joinedTelemetry.addData("Fiducial", "ID: %d, XnoC: %.1f, Xpix: %.1f", fiducialResult.getFiducialId(), xNoCrossDif, xPixDif);
                 adjustTurretTargetPosition(xDif);
                 return setTurretPower();
             }
         } else if (timeout > 0 && now - lastDetect > timeout) {
-            //telemetry.addLine("April Tag not detected.");
-            //telemetry.addLine("April Tag not detected.");
+            //joinedTelemetry.addLine("April Tag not detected.");
+            //joinedTelemetry.addLine("April Tag not detected.");
             turretTargetPosition = 0;
             return setTurretPower();
         }

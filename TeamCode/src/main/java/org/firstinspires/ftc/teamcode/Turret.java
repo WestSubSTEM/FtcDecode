@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.bylazar.configurables.annotations.Configurable;
+import com.bylazar.telemetry.JoinedTelemetry;
+import com.bylazar.telemetry.PanelsTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -12,10 +14,10 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class Turret extends OpMode {
     private final ElapsedTime runtime = new ElapsedTime();
     public BatBot robot = new BatBot();
-
+    JoinedTelemetry joinedTelemetry = new JoinedTelemetry(telemetry, PanelsTelemetry.INSTANCE.getFtcTelemetry());
     @Override
     public void init() {
-        robot.init(hardwareMap, gamepad1, gamepad2, telemetry);
+        robot.init(hardwareMap, gamepad1, gamepad2, joinedTelemetry);
         /*
         Before running the robot, recalibrate the IMU. This needs to happen when the robot is stationary
         The IMU will automatically calibrate when first powered on, but recalibrating before running

@@ -14,7 +14,7 @@ public class STEMperFiConstants {
     public static final double TURRET_TICKS_PER_DEGREE = (TURRET_LAZY_TEETH_PER_REV / TURRET_SMALL_PULLY_TEETH_PER_REV) * TURRET_ENCODER_COUNTS_PER_REV / 360;
     public static final int TURRET_MAX_TICKS = (int) (TURRET_TICKS_PER_DEGREE * 90);
     public static final int TURRET_MIN_TICKS = -TURRET_MAX_TICKS;
-    public static final double TURRET_MOTOR_POWER_MAX = 0.8;
+    public static final double TURRET_MOTOR_POWER_MAX = 1;
     public static final double TURRET_MOTOR_POWER_MIN = .3;
 
     // +- 1% target considered on target
@@ -48,7 +48,7 @@ public class STEMperFiConstants {
     public static final int[] AUTO_SHOTS_22_PGP = {1, 0, 2};
     public static final int[] AUTO_SHOTS_23_PPG = {2, 1, 0};
 
-    public static final long INTAKE_DURING_INDEXER_MOVE_MS = 400;
+    public static final long INTAKE_DURING_INDEXER_MOVE_DELAY_MS = 200;
 
     public static final double GB_LED_OFF = 0;
     public static final double GB_LED_RED = 0.28;
@@ -61,6 +61,7 @@ public class STEMperFiConstants {
     public static final double GB_LED_AZURE = 0.555;
     public static final double GB_LED_BLUE = 0.611;
     public static final double GB_LED_INDIGO = 0.666;
+    public static final double GB_LED_PURPLE = 0.722;
     public static final double GB_LED_VIOLET = 0.722;
     public static final double GB_LED_WHITE = 1.0;
 
@@ -81,7 +82,7 @@ public class STEMperFiConstants {
     public static final double SHOOT_RELATIVE_POWER_MED_AUTO = .24;
     public static final double SHOOT_RELATIVE_POWER_HIGH = 1;
 
-    public static final long SHOOT_DELAY_INDEX_MS = 300;
+    public static final long SHOOT_DELAY_INDEX_MS = 150;
 
     public static final int LIMELIGHT_PIPELINE_BLUE = 7;
     public static final int LIMELIGHT_PIPELINE_RED = 6;

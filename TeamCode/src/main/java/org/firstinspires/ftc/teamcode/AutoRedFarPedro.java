@@ -28,7 +28,7 @@ public class AutoRedFarPedro extends OpMode {
     public final ElapsedTime stateTime = new ElapsedTime();
     private final BatBotSmart robot = new BatBotSmart();
 
-    private JoinedTelemetry joinedTelemetry;
+    JoinedTelemetry joinedTelemetry = new JoinedTelemetry(telemetry, PanelsTelemetry.INSTANCE.getFtcTelemetry());
 
     public boolean isRed = true;
 
@@ -87,9 +87,9 @@ public class AutoRedFarPedro extends OpMode {
             robot.setAllLedsSolid(Color.BLUE);
         }
 
-        robot.indexerContents.set(0, Color.GREEN);
-        robot.indexerContents.set(1, Color.PURPLE);
-        robot.indexerContents.set(2, Color.PURPLE);
+        robot.indexerContents[0] = STEMperFiConstants.GB_LED_GREEN;
+        robot.indexerContents[1] = STEMperFiConstants.GB_LED_PURPLE;
+        robot.indexerContents[2] = STEMperFiConstants.GB_LED_PURPLE;
 
         panelsTelemetry.debug("Status", "Initialized");
         panelsTelemetry.update(telemetry);

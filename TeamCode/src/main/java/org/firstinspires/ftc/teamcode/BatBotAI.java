@@ -41,7 +41,7 @@ public class BatBotAI
     public DigitalChannel laserRight = null;
 // If your lasers are “active-low” (common), true means object present.
 // If they’re active-high, flip this to false.
-    public boolean laserActiveLow = true;
+    public boolean laserActiveLow = false;
 
     public boolean laserPresent(DigitalChannel sensor) {
         if (sensor == null) return false;
@@ -64,7 +64,7 @@ public class BatBotAI
     public GamepadEx gp1, gp2;
 //    public ButtonReader square2ButtonReader, triangle2ButtonReader, circle2ButtonReader, x2ButtonReader, rightBumper2Reader, dUp2ButtonReader, dDown2ButtonReader, dLeft2ButtonReader, dRight2ButtonReader, leftStick2ButtonReader, rightStick2ButtonReader;
     public Servo flipperServo;
-    public Servo indexerServo, indexerLed, hoodServo;
+    public Servo indexerServo, hoodServo;
     public double hoodPosition = 1.0;
     public double flipperServoPosition = STEMperFiConstants.FLIPPER_INTAKE;
     public double indexerServoPosition = STEMperFiConstants.INDEX_1;
@@ -165,7 +165,6 @@ public class BatBotAI
 
         flipperServo = hardwareMap.get(Servo.class, "flipper");
         indexerServo = hardwareMap.get(Servo.class, "indexer");
-        indexerLed = hardwareMap.get(Servo.class, "indexerLed");
 
         turretMotor = hardwareMap.get(DcMotorEx.class, "lazy");
         turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -343,7 +342,7 @@ public class BatBotAI
 
         double leftTrigger = gp2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER);
         double intakePower = 0;
-        if (intakeOn || shooterTriggerPressed || ((now - indexerTimePressed) < STEMperFiConstants.INTAKE_DURING_INDEXER_MOVE_MS)) {
+        if (intakeOn || shooterTriggerPressed || ((now - indexerTimePressed) < STEMperFiConstants.INTAKE_DURING_INDEXER_MOVE_DELAY_MS)) {
             intakePower = 1;
         } else if (leftTrigger > 0.2) {
             intakePower = -leftTrigger;

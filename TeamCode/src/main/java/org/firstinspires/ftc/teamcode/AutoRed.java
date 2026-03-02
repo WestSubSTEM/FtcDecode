@@ -8,6 +8,8 @@ import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorGroup;
+import com.bylazar.telemetry.JoinedTelemetry;
+import com.bylazar.telemetry.PanelsTelemetry;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -43,6 +45,7 @@ public class AutoRed extends LinearOpMode
     private final BatBot robot = new BatBot();
 
     public boolean isRed = true;
+    JoinedTelemetry joinedTelemetry = new JoinedTelemetry(telemetry, PanelsTelemetry.INSTANCE.getFtcTelemetry());
 
     public void waitFlyWheel(long timeToWait) {
         long waitStart = System.currentTimeMillis();
@@ -54,11 +57,7 @@ public class AutoRed extends LinearOpMode
 
     @Override
     public void runOpMode() {
-        robot.init(hardwareMap, gamepad1, gamepad2, telemetry);
-        robot.odo.recalibrateIMU();
-        robot.odo.resetPosAndIMU();
-
-        robot.init(hardwareMap, gamepad1, gamepad2, telemetry);
+        robot.init(hardwareMap, gamepad1, gamepad2, joinedTelemetry);
         robot.odo.recalibrateIMU();
         robot.odo.resetPosAndIMU();
         robot.limelight.pipelineSwitch(STEMperFiConstants.LIMELIGHT_PIPELINE_AUTO);
@@ -76,17 +75,17 @@ public class AutoRed extends LinearOpMode
           //  robot.turretServo.setPosition(robot.turretPosition);
             if (!robot.indexMoved) {
                 robot.odo.resetPosAndIMU();
-                telemetry.addData("resetPosAndIMU: ", robot.indexMoved);
+                joinedTelemetry.addData("resetPosAndIMU: ", robot.indexMoved);
             }
             sleep(250);
             robot.odo.update();
             if (robot.detectAutoPattern()) {
-                telemetry.addData("pattern", robot.pattern);
+                joinedTelemetry.addData("pattern", robot.pattern);
             } else {
-                telemetry.addData("pattern", "no pattern");
+                joinedTelemetry.addData("pattern", "no pattern");
             }
-            telemetry.addData(">", "Robot Heading = %4.0f", robot.odo.getHeading(AngleUnit.DEGREES));
-            telemetry.update();
+            joinedTelemetry.addData(">", "Robot Heading = %4.0f", robot.odo.getHeading(AngleUnit.DEGREES));
+            joinedTelemetry.update();
             robot.startLoop();
             robot.indexer(true);
         }
@@ -127,8 +126,8 @@ public class AutoRed extends LinearOpMode
             sleep(20);
         }
         blackboard.put(STEMperFiConstants.BLACKBOARD_KEY_PATTERN, robot.pattern);
-        telemetry.addData("pattern", robot.pattern);
-        telemetry.update();
+        joinedTelemetry.addData("pattern", robot.pattern);
+        joinedTelemetry.update();
         if (isRed) {
             robot.limelight.pipelineSwitch(STEMperFiConstants.LIMELIGHT_PIPELINE_RED);
         } else {
@@ -146,12 +145,12 @@ public class AutoRed extends LinearOpMode
         while(!robot.detectGoal(0) && runtime.milliseconds() < 2_000 ) {
             robot.startLoop();
             robot.flywheel();
-            telemetry.addData("Target", "off");
+            joinedTelemetry.addData("Target", "off");
             sleep(20);
-            telemetry.update();
+            joinedTelemetry.update();
         }
-        telemetry.addData("Target", "on");
-        telemetry.update();
+        joinedTelemetry.addData("Target", "on");
+        joinedTelemetry.update();
         int[] shotOrder = STEMperFiConstants.AUTO_SHOTS_21_GPP;
         if (STEMperFiConstants.PATTERN_22_PGP.equals(robot.pattern)) {
             shotOrder = STEMperFiConstants.AUTO_SHOTS_22_PGP;
@@ -203,8 +202,8 @@ public class AutoRed extends LinearOpMode
         while (opModeIsActive() && ((System.currentTimeMillis() - start) < timeMs)) {
             sleep(100);
             robot.odo.update();
-            telemetry.addData("current y: ", robot.odo.getPosY(DistanceUnit.MM));
-            telemetry.update();
+            joinedTelemetry.addData("current y: ", robot.odo.getPosY(DistanceUnit.MM));
+            joinedTelemetry.update();
         }
         robot.mecanum.driveRobotCentric(0, 0, 0);
     }
@@ -227,8 +226,8 @@ public class AutoRed extends LinearOpMode
         while (opModeIsActive() && ((System.currentTimeMillis() - start) < timeMs)) {
             sleep(100);
             robot.odo.update();
-            telemetry.addData("current y: ", robot.odo.getPosY(DistanceUnit.MM));
-            telemetry.update();
+            joinedTelemetry.addData("current y: ", robot.odo.getPosY(DistanceUnit.MM));
+            joinedTelemetry.update();
         }
         robot.mecanum.driveRobotCentric(0, 0, 0);
     }
@@ -240,8 +239,8 @@ public class AutoRed extends LinearOpMode
         while (opModeIsActive() && ((System.currentTimeMillis() - start) < timeMs)) {
             sleep(100);
             robot.odo.update();
-            telemetry.addData("current y: ", robot.odo.getPosY(DistanceUnit.MM));
-            telemetry.update();
+            joinedTelemetry.addData("current y: ", robot.odo.getPosY(DistanceUnit.MM));
+            joinedTelemetry.update();
         }
 
         robot.mecanum.driveRobotCentric(0, 0, 0);

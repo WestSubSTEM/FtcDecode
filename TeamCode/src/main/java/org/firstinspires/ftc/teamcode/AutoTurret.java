@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.arcrobotics.ftclib.hardware.motors.Motor;
+import com.bylazar.telemetry.JoinedTelemetry;
+import com.bylazar.telemetry.PanelsTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -16,6 +18,8 @@ import org.firstinspires.ftc.teamcode.Prism.Color;
 @Autonomous(name="turret auto", group="Util")
 public class AutoTurret extends LinearOpMode
 {
+
+    JoinedTelemetry joinedTelemetry = new JoinedTelemetry(telemetry, PanelsTelemetry.INSTANCE.getFtcTelemetry());
     // Declare OpMode members.
     private final ElapsedTime runtime = new ElapsedTime();
 
@@ -25,7 +29,7 @@ public class AutoTurret extends LinearOpMode
 
     @Override
     public void runOpMode() {
-        robot.init(hardwareMap, gamepad1, gamepad2, telemetry);
+        robot.init(hardwareMap, gamepad1, gamepad2, joinedTelemetry);
         robot.odo.recalibrateIMU();
         robot.odo.resetPosAndIMU();
         robot.turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);

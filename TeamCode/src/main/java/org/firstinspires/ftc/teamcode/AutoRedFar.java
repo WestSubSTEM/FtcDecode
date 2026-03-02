@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.bylazar.telemetry.JoinedTelemetry;
+import com.bylazar.telemetry.PanelsTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -18,6 +20,8 @@ public class AutoRedFar extends LinearOpMode
 
     public boolean isRed = true;
 
+    JoinedTelemetry joinedTelemetry = new JoinedTelemetry(telemetry, PanelsTelemetry.INSTANCE.getFtcTelemetry());
+
     public void waitFlyWheel(long timeToWait) {
         long waitStart = System.currentTimeMillis();
         do {
@@ -29,7 +33,7 @@ public class AutoRedFar extends LinearOpMode
 
     @Override
     public void runOpMode() {
-        robot.init(hardwareMap, gamepad1, gamepad2, telemetry);
+        robot.init(hardwareMap, gamepad1, gamepad2, joinedTelemetry);
         robot.odo.recalibrateIMU();
         robot.odo.resetPosAndIMU();
         robot.limelight.pipelineSwitch(STEMperFiConstants.LIMELIGHT_PIPELINE_AUTO);
@@ -46,17 +50,17 @@ public class AutoRedFar extends LinearOpMode
         while (opModeInInit()) {
             if (!robot.indexMoved) {
                 robot.odo.resetPosAndIMU();
-                telemetry.addData("resetPosAndIMU: ", robot.indexMoved);
+                joinedTelemetry.addData("resetPosAndIMU: ", robot.indexMoved);
             }
             sleep(250);
             robot.odo.update();
             if (robot.detectAutoPattern()) {
-                telemetry.addData("pattern", robot.pattern);
+                joinedTelemetry.addData("pattern", robot.pattern);
             } else {
-                telemetry.addData("pattern", "no pattern");
+                joinedTelemetry.addData("pattern", "no pattern");
             }
-            telemetry.addData(">", "Robot Heading = %4.0f", robot.odo.getHeading(AngleUnit.DEGREES));
-            telemetry.update();
+            joinedTelemetry.addData(">", "Robot Heading = %4.0f", robot.odo.getHeading(AngleUnit.DEGREES));
+            joinedTelemetry.update();
             robot.startLoop();
             robot.indexer(false);
         }
@@ -71,8 +75,8 @@ public class AutoRedFar extends LinearOpMode
             sleep(20);
         }
         blackboard.put(STEMperFiConstants.BLACKBOARD_KEY_PATTERN, robot.pattern);
-        telemetry.addData("pattern", robot.pattern);
-        telemetry.update();
+        joinedTelemetry.addData("pattern", robot.pattern);
+        joinedTelemetry.update();
        // robot.turretPosition += isRed ? .05 : -.05;
        // robot.turretServo.setPosition(robot.turretPosition);
         robot.limelight.pipelineSwitch(robot.isRed ? STEMperFiConstants.LIMELIGHT_PIPELINE_RED : STEMperFiConstants.LIMELIGHT_PIPELINE_BLUE);
@@ -82,12 +86,12 @@ public class AutoRedFar extends LinearOpMode
         while(!robot.detectGoal(0) && runtime.milliseconds() < 2_000 ) {
             robot.startLoop();
             robot.flywheel();
-            telemetry.addData("Target", "off");
+            joinedTelemetry.addData("Target", "off");
             sleep(20);
-            telemetry.update();
+            joinedTelemetry.update();
         }
-        telemetry.addData("Target", "on");
-        telemetry.update();
+        joinedTelemetry.addData("Target", "on");
+        joinedTelemetry.update();
         int[] shotOrder = STEMperFiConstants.AUTO_SHOTS_21_GPP;
         if (STEMperFiConstants.PATTERN_22_PGP.equals(robot.pattern)) {
             shotOrder = STEMperFiConstants.AUTO_SHOTS_22_PGP;
@@ -131,8 +135,8 @@ public class AutoRedFar extends LinearOpMode
         while (opModeIsActive() && ((System.currentTimeMillis() - start) < timeMs)) {
             sleep(100);
             robot.odo.update();
-            telemetry.addData("current y: ", robot.odo.getPosY(DistanceUnit.MM));
-            telemetry.update();
+            joinedTelemetry.addData("current y: ", robot.odo.getPosY(DistanceUnit.MM));
+            joinedTelemetry.update();
         }
         robot.mecanum.driveRobotCentric(0, 0, 0);
     }
@@ -156,8 +160,8 @@ public class AutoRedFar extends LinearOpMode
         while (opModeIsActive() && ((System.currentTimeMillis() - start) < timeMs)) {
             sleep(100);
             robot.odo.update();
-            telemetry.addData("current y: ", robot.odo.getPosY(DistanceUnit.MM));
-            telemetry.update();
+            joinedTelemetry.addData("current y: ", robot.odo.getPosY(DistanceUnit.MM));
+            joinedTelemetry.update();
         }
         robot.mecanum.driveRobotCentric(0, 0, 0);
     }
@@ -169,8 +173,8 @@ public class AutoRedFar extends LinearOpMode
         while (opModeIsActive() && ((System.currentTimeMillis() - start) < timeMs)) {
             sleep(100);
             robot.odo.update();
-            telemetry.addData("current y: ", robot.odo.getPosY(DistanceUnit.MM));
-            telemetry.update();
+            joinedTelemetry.addData("current y: ", robot.odo.getPosY(DistanceUnit.MM));
+            joinedTelemetry.update();
         }
 
         robot.mecanum.driveRobotCentric(0, 0, 0);
