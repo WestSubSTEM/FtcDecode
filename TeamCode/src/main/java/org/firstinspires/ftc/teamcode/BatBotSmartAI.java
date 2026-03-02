@@ -123,7 +123,9 @@ public long indexerMoveDelay = 0;
             telemetry.addData("shootPressed", shootPressed);
             telemetry.addData("isOnTarget", isOnTarget);
             telemetry.addData("lastDetect", lastDetect);
-            if (shooterTriggerPressed && shootPressed == 0 && isOnTarget && lastDetect == now) {
+
+            boolean targetFresh = (now - lastDetect) <=150;
+            if (shooterTriggerPressed && shootPressed == 0 && isOnTarget && targetFresh) {
                 if (indexerContents.get(indexerIndex) == Color.WHITE) {
                     if (indexerContents.get(2) != Color.WHITE) {
                       setIndexerPosition(2);
@@ -135,8 +137,8 @@ public long indexerMoveDelay = 0;
                     return;
                 }
                 shootPressed = now;
-                flipperUpDelay = now + 500;
-                flipperDownDelay = now + (500 * 2);
+                flipperUpDelay = now + 300; //Was 500 up and down, 250 likely most aggressive possible
+                flipperDownDelay = now + (300 * 2);
                 flipperServoPosition = STEMperFiConstants.FLIPPER_SHOOT;
                 flipperServo.setPosition(flipperServoPosition);
             }
@@ -346,7 +348,6 @@ public long indexerMoveDelay = 0;
         } else {
             emptyStableLoops = 0;
         }
-
     }
 
 

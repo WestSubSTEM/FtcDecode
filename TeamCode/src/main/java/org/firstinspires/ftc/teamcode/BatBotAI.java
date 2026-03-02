@@ -74,6 +74,46 @@ public class BatBotAI
     public long odoResetTimeMS = 0;
     public double shooterSpeed = 0;
     public boolean shooterTriggerPressed = false;
+
+    public double goalDistanceM = Double.NaN;
+    public long goalDistanceLastSeenMs = 0;
+
+    //Toggle to enable distance-based setpoints (we can pick a button)
+    public boolean autoDistanceShot = false;
+
+    private static class ShotPoint {
+        final double m;      // distance meters
+        final double pwr;    // shooter power (0..1)
+        final double hood;   // servo position (0..1)
+        ShotPoint(double m, double pwr, double hood) { this.m = m; this.pwr = pwr; this.hood = hood; }
+    }
+
+    // Start with just 2 points (near/far), add more later without changing logic.
+    private final ShotPoint[] shotTable = new ShotPoint[] {
+            new ShotPoint(1.0, STEMperFiConstants.SHOOT_RELATIVE_POWER_SHORT, STEMperFiConstants.HOOD_RELATIVE_ANGLE_SHORT),
+            new ShotPoint(2.5, STEMperFiConstants.SHOOT_RELATIVE_POWER_HIGH,  STEMperFiConstants.HOOD_RELATIVE_ANGLE_MED)
+    };
+
+    private ShotPoint interpShot(double distM) {
+        // clamp outside range
+        if (distM <= shotTable[0].m) return shotTable[0];
+        if (distM >= shotTable[shotTable.length - 1].m) return shotTable[shotTable.length - 1];
+
+        // find segment
+        for (int i = 0; i < shotTable.length - 1; i++) {
+            ShotPoint a = shotTable[i];
+            ShotPoint b = shotTable[i + 1];
+            if (distM >= a.m && distM <= b.m) {
+                double t = (distM - a.m) / (b.m - a.m);
+                double p = a.pwr + t * (b.pwr - a.pwr);
+                double h = a.hood + t * (b.hood - a.hood);
+                return new ShotPoint(distM, p, h);
+            }
+        }
+        return shotTable[0]; // fallback
+    }
+
+
     public long now = System.currentTimeMillis();
     public List<LynxModule> hubs;
     public Gamepad gamepad1, gamepad2;
@@ -431,6 +471,20 @@ public class BatBotAI
         } else if (gp2.getButton(GamepadKeys.Button.B)) { // CIRCLE
             shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_HIGH;
         }
+
+        // Example toggle: Triangle press toggles autoDistanceShot
+        if (gp2.wasJustPressed(GamepadKeys.Button.B)) {
+            autoDistanceShot = !autoDistanceShot;
+        }
+
+        boolean distanceFresh = !Double.isNaN(goalDistanceM) && (now - goalDistanceLastSeenMs) <= 200;
+
+        if (autoDistanceShot && distanceFresh) {
+            ShotPoint s = interpShot(goalDistanceM);
+            shooterSpeed = s.pwr;
+            hoodPosition = s.hood;
+        }
+
         hoodServo.setPosition(hoodPosition);
         //telemetry.addData("shooterSpeed", shooterSpeed);
         if (shooterSpeed == 0) {
@@ -501,7 +555,31 @@ public class BatBotAI
     public boolean setTurretPower() {
         int currentPosition = -turretMotor.getCurrentPosition();
         int dif = turretTargetPosition - currentPosition;
-        isOnTarget = Math.abs(dif) < STEMperFiConstants.TURRET_TARGET_DELTA;
+
+        //TURRET FINDING TARGET - FASTER UNTIL CLOSE
+        int absDif = Math.abs(dif);
+        isOnTarget = absDif < STEMperFiConstants.TURRET_TARGET_DELTA;
+        double maxP = STEMperFiConstants.TURRET_MOTOR_POWER_MAX;
+        double minP = STEMperFiConstants.TURRET_MOTOR_POWER_MIN;
+        // "FAR" threshold; beyond this drive at full power for fast snap
+        int farTicks = 3 * STEMperFiConstants.TURRET_TARGET_DELTA;
+        double newTurretPower;
+        if (isOnTarget) {
+            newTurretPower = 0;
+        } else if (absDif >= farTicks) {
+            newTurretPower = Math.signum(dif) * maxP;  //Snap fast
+        } else {
+            // Near target: proportional so it doesn't overshoot or hunt
+            newTurretPower = maxP * 1.8 * ((double) dif / (double) STEMperFiConstants.TURRET_MAX_TICKS);
+
+            //clamp + enforce minimum
+            newTurretPower = Math.min(maxP, newTurretPower);
+            newTurretPower = Math.max(-maxP, newTurretPower);
+            if (newTurretPower > 0 && newTurretPower < minP) newTurretPower = minP;
+            if (newTurretPower < 0 && newTurretPower > -minP) newTurretPower = -minP;
+        }
+
+/*      // TURRET FINDING TARGET - PREVIOUS
         double newTurretPower = STEMperFiConstants.TURRET_MOTOR_POWER_MAX * 1.8 * (((double)dif) / (double)STEMperFiConstants.TURRET_MAX_TICKS);
         newTurretPower = Math.min(STEMperFiConstants.TURRET_MOTOR_POWER_MAX, newTurretPower);
         newTurretPower = Math.max(-STEMperFiConstants.TURRET_MOTOR_POWER_MAX, newTurretPower);
@@ -510,6 +588,7 @@ public class BatBotAI
         if (isOnTarget) {
             newTurretPower = 0;
         }
+        */
         turretMotor.setPower(newTurretPower);
         //telemetry.addData("current  Pos: ", currentPosition);
         //telemetry.addData("turret Power: ", newTurretPower);
@@ -524,6 +603,12 @@ public class BatBotAI
             LLResultTypes.FiducialResult fiducialResult = fiducialResults.get(0);
             if (fiducialResult != null) {
                 lastDetect = now;
+                //set distance too...
+                Double d = estimateDistanceMetersFromTy(fiducialResult);
+                if (d != null) {
+                    goalDistanceM = d;
+                    goalDistanceLastSeenMs = now;
+                }
                 double xDif = -fiducialResult.getTargetXDegrees();
                 double xPixDif = fiducialResult.getTargetXPixels();
                 double xNoCrossDif = fiducialResult.getTargetXDegreesNoCrosshair();
@@ -539,6 +624,22 @@ public class BatBotAI
             return setTurretPower();
         }
         return false;
+    }
+
+    private Double estimateDistanceMetersFromTy(LLResultTypes.FiducialResult tag) {
+        try {
+            double tyDeg = tag.getTargetYDegrees();
+
+            double cameraHeightM = 0.30;
+            double targetHeightM = 0.90;
+            double cameraPitchDeg = 20.0;
+
+            double angleRad = Math.toRadians(cameraPitchDeg + tyDeg);
+            double dist = (targetHeightM - cameraHeightM) / Math.tan(angleRad);
+            return dist > 0 ? dist : null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public boolean detectAutoPattern() {
