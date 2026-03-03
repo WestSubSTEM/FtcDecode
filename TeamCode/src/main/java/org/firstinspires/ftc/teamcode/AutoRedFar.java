@@ -33,7 +33,7 @@ public class AutoRedFar extends LinearOpMode
 
     @Override
     public void runOpMode() {
-        robot.init(hardwareMap, gamepad1, gamepad2, joinedTelemetry);
+        robot.init(hardwareMap, gamepad1, gamepad2, joinedTelemetry, blackboard);
         robot.odo.recalibrateIMU();
         robot.odo.resetPosAndIMU();
         robot.limelight.pipelineSwitch(STEMperFiConstants.LIMELIGHT_PIPELINE_AUTO);

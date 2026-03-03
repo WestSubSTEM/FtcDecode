@@ -59,7 +59,7 @@ public class AutoRedFarPedro extends OpMode {
     public void init() {
         panelsTelemetry = PanelsTelemetry.INSTANCE.getTelemetry();
         joinedTelemetry = new JoinedTelemetry(telemetry);
-        robot.init(hardwareMap, gamepad1, gamepad2, joinedTelemetry);
+        robot.init(hardwareMap, gamepad1, gamepad2, joinedTelemetry, blackboard);
 
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(startingPose);

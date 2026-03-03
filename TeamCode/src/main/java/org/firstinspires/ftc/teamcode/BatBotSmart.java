@@ -102,19 +102,6 @@ public class BatBotSmart extends BatBot
         }
     }
 
-    @Override
-    public void indexer(boolean isInit) {
-        // INDEXER
-        if (!shooterTriggerPressed && !isIndexerMoving()) {
-            if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
-                setIndexerPosition(1);
-            } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
-                setIndexerPosition(0);
-            } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
-                setIndexerPosition(2);
-            }
-        }
-    }
     private double percentDifference(double newValue, double oldValue) {
         return oldValue != 0 ? 100 * (newValue - oldValue) / oldValue : 0;
     }

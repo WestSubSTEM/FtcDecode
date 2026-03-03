@@ -1,31 +1,23 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.bylazar.telemetry.JoinedTelemetry;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.teamcode.Prism.Color;
 
 
-@Disabled
-@Autonomous(name="turret auto", group="Util")
-public class AutoTurret extends LinearOpMode
+@TeleOp(name="Dingo Color", group="Dingo")
+public class AutoColor extends LinearOpMode
 {
-
     JoinedTelemetry joinedTelemetry = new JoinedTelemetry(telemetry, PanelsTelemetry.INSTANCE.getFtcTelemetry());
     // Declare OpMode members.
     private final ElapsedTime runtime = new ElapsedTime();
 
     private final BatBot robot = new BatBot();
-
-
 
     @Override
     public void runOpMode() {
@@ -35,21 +27,21 @@ public class AutoTurret extends LinearOpMode
         robot.turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.turretMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-
         while (opModeInInit()) {
             robot.startLoop();
-            telemetry.addData("init", 0);
-            sleep(100);
-            telemetry.update();
+            robot.indexer(true);
         }
         runtime.reset();
 
         while (opModeIsActive()) {
             robot.startLoop();
-            robot.turretMotor.setPower(gamepad2.right_stick_y);
-            telemetry.addData("power:", robot.turretMotor.getPower());
-            telemetry.addData("pos: ", -robot.turretMotor.getCurrentPosition());
-            telemetry.update();
+            robot.indexer(false);
+            double currentColor = robot.determineColor();
+            robot.indexerContents[0] = currentColor;
+            robot.indexerContents[1] = currentColor;
+            robot.indexerContents[2] = currentColor;
+            robot.setIndexerLeds();
+            joinedTelemetry.update();
         }
     }
 }

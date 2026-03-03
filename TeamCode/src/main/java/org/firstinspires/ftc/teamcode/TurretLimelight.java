@@ -23,7 +23,7 @@ public class TurretLimelight extends OpMode {
 
     @Override
     public void init() {
-        robot.init(hardwareMap, gamepad1, gamepad2, joinedTelemetry);
+        robot.init(hardwareMap, gamepad1, gamepad2, joinedTelemetry, blackboard);
         /*
         Before running the robot, recalibrate the IMU. This needs to happen when the robot is stationary
         The IMU will automatically calibrate when first powered on, but recalibrating before running

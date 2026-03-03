@@ -18,7 +18,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
-@Autonomous(name="Auto Blue Short", group="Meet 3 Short")
+@Autonomous(name="Auto Blue Dingo", group="Meet 3 Short")
 public class AutoBlue extends AutoRed
 {
     public AutoBlue() {

@@ -20,6 +20,10 @@ public class STEMperFiConstants {
     // +- 1% target considered on target
     public static final int TURRET_TARGET_DELTA = (int) (TURRET_MAX_TICKS * 0.01);
 
+    public static final String BLACKBOARD_KEY_CS2_GREEN = "COLOR_SENSOR_2_GREEN";
+    public static final String BLACKBOARD_KEY_CS3_GREEN = "COLOR_SENSOR_3_GREEN";
+    public static final String BLACKBOARD_KEY_CS2_PURPLE = "COLOR_SENSOR_2_PURPLE";
+    public static final String BLACKBOARD_KEY_CS3_PURPLE = "COLOR_SENSOR_3_PURPLE";
 
     public static final String BLACKBOARD_KEY_ALLIANCE = "BLACKBOARD_KEY_ALLIANCE";
     public static final String BLACKBOARD_KEY_PATTERN = "BLACKBOARD_KEY_PATTERN";

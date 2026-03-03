@@ -28,6 +28,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.Prism.Color;
 import org.firstinspires.ftc.teamcode.Prism.GoBildaPrismDriver;
 
+import java.util.HashMap;
 import java.util.List;
 
 @Configurable
@@ -75,11 +76,22 @@ public class BatBot
     public NormalizedRGBA cs2RgbaBase, cs3RgbaBase;
     public long indexerMoveDelay = 0;
 
+    public HashMap<String, Object> blackboard;
     public final float[] hsvValues2 = new float[3];
     public final float[] hsvValues3 = new float[3];
+    NormalizedRGBA cs2RgbaGreen, cs3RgbaGreen, cs2RgbaPurple, cs3RgbaPurple;
+    boolean hasBlackboardColors = false;
     JoinedTelemetry joinedTelemetry;
-    public void init(HardwareMap hardwareMap, Gamepad gamepad1, Gamepad gamepad2, JoinedTelemetry joinedTelemetry) {
+    public void init(HardwareMap hardwareMap, Gamepad gamepad1, Gamepad gamepad2, JoinedTelemetry joinedTelemetry, HashMap<String, Object> blackboard) {
         this.joinedTelemetry = joinedTelemetry;
+
+        this.blackboard = blackboard;
+        cs2RgbaGreen = (NormalizedRGBA) blackboard.get(STEMperFiConstants.BLACKBOARD_KEY_CS2_GREEN);
+        cs3RgbaGreen = (NormalizedRGBA) blackboard.get(STEMperFiConstants.BLACKBOARD_KEY_CS3_GREEN);
+        cs2RgbaPurple = (NormalizedRGBA) blackboard.get(STEMperFiConstants.BLACKBOARD_KEY_CS2_PURPLE);
+        cs3RgbaPurple = (NormalizedRGBA) blackboard.get(STEMperFiConstants.BLACKBOARD_KEY_CS3_PURPLE);
+        hasBlackboardColors = cs2RgbaGreen != null && cs3RgbaGreen != null && cs2RgbaPurple != null && cs3RgbaPurple != null;
+
 
         this.gamepad1 = gamepad1;
         this.gamepad2 = gamepad2;
@@ -332,7 +344,24 @@ public class BatBot
         flipperServo.setPosition(flipperServoPosition);
     }
 
+    //
+    private int initCount = 0;
     public void indexer(boolean isInit) {
+        if (isInit) {
+            if (initCount == 0) {
+                cs2RgbaGreen = cs2.getNormalizedColors();
+                cs3RgbaGreen = cs3.getNormalizedColors();
+                blackboard.put(STEMperFiConstants.BLACKBOARD_KEY_CS2_GREEN, cs2RgbaGreen);
+                blackboard.put(STEMperFiConstants.BLACKBOARD_KEY_CS3_GREEN, cs3RgbaGreen);
+                initCount++;
+            } else if (initCount == 1) {
+                cs2RgbaPurple = cs2.getNormalizedColors();
+                cs3RgbaPurple = cs3.getNormalizedColors();
+                blackboard.put(STEMperFiConstants.BLACKBOARD_KEY_CS2_PURPLE, cs2RgbaPurple);
+                blackboard.put(STEMperFiConstants.BLACKBOARD_KEY_CS3_PURPLE, cs3RgbaPurple);
+                hasBlackboardColors = true;
+            }
+        }
         // INDEXER
         if (!shooterTriggerPressed && !isShooting()) {
             if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
@@ -343,9 +372,6 @@ public class BatBot
                 setIndexerPosition(2);
             }
         }
-    }
-    private double percentDifference(double newValue, double oldValue) {
-      return oldValue != 0 ? 100 * (newValue - oldValue) / oldValue : 0;
     }
     public void intake() {
         if (gp2.wasJustPressed(GamepadKeys.Button.RIGHT_BUMPER)) {
@@ -361,12 +387,38 @@ public class BatBot
         }
         intakeMotor.setPower(intakePower);
     }
+
+    private double difInit(NormalizedRGBA current, NormalizedRGBA init) {
+        return Math.abs(current.red - init.red) + Math.abs(current.blue - init.blue) + Math.abs(current.green - init.green);
+    }
+
     public double determineColor(){
-        //Evaluate color
-        Color answer = Color.WHITE;
         //Read the color sensors
         NormalizedRGBA cs2RgbaNew = cs2.getNormalizedColors();
         NormalizedRGBA cs3RgbaNew = cs3.getNormalizedColors();
+
+        // if we have the blackboard object compare against that
+        if (hasBlackboardColors) {
+            double c2GreenDif = difInit(cs2RgbaNew, cs2RgbaGreen);
+            double c3GreenDif = difInit(cs3RgbaNew, cs3RgbaGreen);
+            double c2PurpleDif = difInit(cs2RgbaNew, cs2RgbaPurple);
+            double c3PurpleDif = difInit(cs3RgbaNew, cs3RgbaPurple);
+
+            int voteGreen = 0;
+            int votePurple = 0;
+
+            if (c2GreenDif < c2PurpleDif) {
+                voteGreen++;
+            } else {
+                votePurple++;
+            }
+            if (c3GreenDif < c3PurpleDif) {
+                voteGreen++;
+            } else {
+                votePurple++;
+            }
+            return voteGreen > votePurple ? STEMperFiConstants.GB_LED_GREEN : STEMperFiConstants.GB_LED_PURPLE;
+        }
 
         android.graphics.Color.colorToHSV(cs2RgbaNew.toColor(), hsvValues2);
         android.graphics.Color.colorToHSV(cs3RgbaNew.toColor(), hsvValues3);
@@ -377,31 +429,6 @@ public class BatBot
             return STEMperFiConstants.GB_LED_PURPLE;
         }
         return STEMperFiConstants.GB_LED_GREEN;
-
-
-//        double cs2PercentDiffRed = percentDifference(cs2RgbaNew.red, cs2RgbaBase.red);
-//        double cs2PercentDiffGreen = percentDifference(cs2RgbaNew.green, cs2RgbaBase.green);
-//        double cs2PercentDiffBlue = percentDifference(cs2RgbaNew.blue, cs2RgbaBase.blue);
-//        double cs3PercentDiffBlue = percentDifference(cs3RgbaNew.blue, cs3RgbaBase.blue);
-//        // Green
-//        int greenPoints = 0;
-//        if (cs2PercentDiffGreen > cs2PercentDiffBlue && cs2PercentDiffGreen > cs2PercentDiffRed && cs2PercentDiffGreen > 80) {
-//            greenPoints++;
-//        }
-//        if (cs3PercentDiffBlue > 100 && cs3PercentDiffBlue < 160) {
-//            greenPoints++;
-//        }
-//        // purple
-//        int purplePoints = 0;
-//        if (cs2PercentDiffGreen < cs2PercentDiffBlue && cs2PercentDiffGreen < cs2PercentDiffRed && cs2PercentDiffRed > 80 && cs2PercentDiffBlue > 80) {
-//            purplePoints++;
-//        }
-//        if (cs2PercentDiffBlue > 160) {
-//            purplePoints++;
-//        }
-//        if (greenPoints > 0 || purplePoints > 0) {
-//            answer = greenPoints > purplePoints ? Color.GREEN : Color.PURPLE;
-//        }
     }
 
     public double getCurrentColor() {
@@ -446,9 +473,6 @@ public class BatBot
         }
         return 0;
     }
-
-
-
 
     public void flywheel() {
 //        square2ButtonReader = new ButtonReader(gp2, GamepadKeys.Button.X);
