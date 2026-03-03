@@ -73,13 +73,13 @@ public class BatBot
     public String pattern = STEMperFiConstants.PATTERN_21_GPP;
     DigitalChannel laserLeft, laserRight;
     public boolean indexMoved = false;
-    public NormalizedRGBA cs2RgbaBase, cs3RgbaBase;
+    public NormalizedRGBA cs2RgbaBase;
     public long indexerMoveDelay = 0;
 
     public HashMap<String, Object> blackboard;
     public final float[] hsvValues2 = new float[3];
     public final float[] hsvValues3 = new float[3];
-    NormalizedRGBA cs2RgbaGreen, cs3RgbaGreen, cs2RgbaPurple, cs3RgbaPurple;
+    NormalizedRGBA cs2RgbaGreen, cs2RgbaPurple;
     boolean hasBlackboardColors = false;
     JoinedTelemetry joinedTelemetry;
     public void init(HardwareMap hardwareMap, Gamepad gamepad1, Gamepad gamepad2, JoinedTelemetry joinedTelemetry, HashMap<String, Object> blackboard) {
@@ -87,10 +87,8 @@ public class BatBot
 
         this.blackboard = blackboard;
         cs2RgbaGreen = (NormalizedRGBA) blackboard.get(STEMperFiConstants.BLACKBOARD_KEY_CS2_GREEN);
-        cs3RgbaGreen = (NormalizedRGBA) blackboard.get(STEMperFiConstants.BLACKBOARD_KEY_CS3_GREEN);
         cs2RgbaPurple = (NormalizedRGBA) blackboard.get(STEMperFiConstants.BLACKBOARD_KEY_CS2_PURPLE);
-        cs3RgbaPurple = (NormalizedRGBA) blackboard.get(STEMperFiConstants.BLACKBOARD_KEY_CS3_PURPLE);
-        hasBlackboardColors = cs2RgbaGreen != null && cs3RgbaGreen != null && cs2RgbaPurple != null && cs3RgbaPurple != null;
+        hasBlackboardColors = cs2RgbaGreen != null && cs2RgbaPurple != null;
 
 
         this.gamepad1 = gamepad1;
@@ -156,6 +154,7 @@ public class BatBot
         hoodServo =  hardwareMap.get(Servo.class, "hood");
 
         flipperServo = hardwareMap.get(Servo.class, "flipper");
+        flipperServo.setPosition(flipperServoPosition);
         indexerServo = hardwareMap.get(Servo.class, "indexer");
         blueLed =  hardwareMap.get(Servo.class, "blueLed");
         pinkLed =  hardwareMap.get(Servo.class, "pinkLed");
@@ -175,10 +174,7 @@ public class BatBot
             ((SwitchableLight)cs2).enableLight(true);
         }
         cs2.setGain(STEMperFiConstants.COLOR_SENSOR_GAIN);
-        cs3.setGain(STEMperFiConstants.COLOR_SENSOR_GAIN);
-
         cs2RgbaBase = cs2.getNormalizedColors();
-        cs3RgbaBase = cs3.getNormalizedColors();
 
         odo = hardwareMap.get(GoBildaPinpointDriver.class, "odo");
 
@@ -227,7 +223,11 @@ public class BatBot
         laserRight = hardwareMap.get(DigitalChannel.class, "laser_right");
         laserRight.setMode(DigitalChannel.Mode.INPUT);
     }
+
     public void setIndexerPosition(int indexNew) {
+        setIndexerPosition(indexNew, false);
+    }
+    public void setIndexerPosition(int indexNew, boolean isInit) {
         joinedTelemetry.addData("setIndexerPosition: ",  indexNew);
         if (indexNew == -1) {
             indexNew = 2;
@@ -235,6 +235,17 @@ public class BatBot
             indexNew = 0;
         }
         if (indexNew >= 0 && indexNew < 3) {
+            if (isInit) {
+                if (initCount == 0) {
+                    cs2RgbaGreen = cs2.getNormalizedColors();
+                    blackboard.put(STEMperFiConstants.BLACKBOARD_KEY_CS2_GREEN, cs2RgbaGreen);
+                    initCount++;
+                } else if (initCount == 1) {
+                    cs2RgbaPurple = cs2.getNormalizedColors();
+                    blackboard.put(STEMperFiConstants.BLACKBOARD_KEY_CS2_PURPLE, cs2RgbaPurple);
+                    hasBlackboardColors = true;
+                }
+            }
             double indexerServoPositionNew = STEMperFiConstants.INDEXES.get(indexNew);
             if (indexerServoPositionNew != indexerServoPosition) {
                 indexerServoPosition = indexerServoPositionNew;
@@ -346,30 +357,14 @@ public class BatBot
 
     //
     private int initCount = 0;
-    public void indexer(boolean isInit) {
-        if (isInit) {
-            if (initCount == 0) {
-                cs2RgbaGreen = cs2.getNormalizedColors();
-                cs3RgbaGreen = cs3.getNormalizedColors();
-                blackboard.put(STEMperFiConstants.BLACKBOARD_KEY_CS2_GREEN, cs2RgbaGreen);
-                blackboard.put(STEMperFiConstants.BLACKBOARD_KEY_CS3_GREEN, cs3RgbaGreen);
-                initCount++;
-            } else if (initCount == 1) {
-                cs2RgbaPurple = cs2.getNormalizedColors();
-                cs3RgbaPurple = cs3.getNormalizedColors();
-                blackboard.put(STEMperFiConstants.BLACKBOARD_KEY_CS2_PURPLE, cs2RgbaPurple);
-                blackboard.put(STEMperFiConstants.BLACKBOARD_KEY_CS3_PURPLE, cs3RgbaPurple);
-                hasBlackboardColors = true;
-            }
-        }
-        // INDEXER
+    public void indexer(boolean isInit) {// INDEXER
         if (!shooterTriggerPressed && !isShooting()) {
             if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
-                setIndexerPosition(1);
+                setIndexerPosition(1, isInit);
             } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
-                setIndexerPosition(0);
+                setIndexerPosition(0, isInit);
             } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
-                setIndexerPosition(2);
+                setIndexerPosition(2, isInit);
             }
         }
     }
@@ -400,10 +395,12 @@ public class BatBot
         // if we have the blackboard object compare against that
         if (hasBlackboardColors) {
             double c2GreenDif = difInit(cs2RgbaNew, cs2RgbaGreen);
-            double c3GreenDif = difInit(cs3RgbaNew, cs3RgbaGreen);
+            // double c3GreenDif = difInit(cs3RgbaNew, cs3RgbaGreen);
             double c2PurpleDif = difInit(cs2RgbaNew, cs2RgbaPurple);
-            double c3PurpleDif = difInit(cs3RgbaNew, cs3RgbaPurple);
+            // double c3PurpleDif = difInit(cs3RgbaNew, cs3RgbaPurple);
 
+            joinedTelemetry.addData("c2GreenDif: ", c2GreenDif);
+            joinedTelemetry.addData("c2PurpleDif: ", c2PurpleDif);
             int voteGreen = 0;
             int votePurple = 0;
 
@@ -412,11 +409,11 @@ public class BatBot
             } else {
                 votePurple++;
             }
-            if (c3GreenDif < c3PurpleDif) {
-                voteGreen++;
-            } else {
-                votePurple++;
-            }
+//            if (c3GreenDif < c3PurpleDif) {
+//                voteGreen++;
+//            } else {
+//                votePurple++;
+//            }
             return voteGreen > votePurple ? STEMperFiConstants.GB_LED_GREEN : STEMperFiConstants.GB_LED_PURPLE;
         }
 

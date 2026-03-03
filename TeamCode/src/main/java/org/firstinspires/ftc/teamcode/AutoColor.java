@@ -29,7 +29,14 @@ public class AutoColor extends LinearOpMode
 
         while (opModeInInit()) {
             robot.startLoop();
+            joinedTelemetry.addData("FLIPPER_INTAKE", STEMperFiConstants.FLIPPER_INTAKE);
+            double currentColor = robot.determineColor();
+            robot.indexerContents[0] = currentColor;
+            robot.indexerContents[1] = currentColor;
+            robot.indexerContents[2] = currentColor;
+            robot.setIndexerLeds();
             robot.indexer(true);
+            joinedTelemetry.update();
         }
         runtime.reset();
 

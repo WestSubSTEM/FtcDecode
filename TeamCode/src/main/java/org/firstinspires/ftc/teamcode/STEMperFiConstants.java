@@ -34,7 +34,7 @@ public class STEMperFiConstants {
     public static final String PATTERN_22_PGP = "PGP";
     public static final String PATTERN_23_PPG = "PPG";
 
-    public static final double FLIPPER_INTAKE = 0.52;
+    public static final double FLIPPER_INTAKE = 0.45;
     public static final double FLIPPER_SHOOT = .25;
 
     public static final double INDEX_1 = .8;
