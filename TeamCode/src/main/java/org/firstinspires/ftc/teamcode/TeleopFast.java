@@ -73,5 +73,7 @@ public class TeleopFast extends OpMode {
 
         // SHOOTER
         robot.shoot();
+
+        robot.autoHealSlotState();
     }
 }

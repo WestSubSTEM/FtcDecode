@@ -15,6 +15,9 @@ public class BatBotSmart extends BatBot
         super.startLoop();
     }
 
+    private int healPresentLoops = 0;
+    private int healEmptyLoops = 0;
+
     long shootPressed = 0;
     long flipperDownDelay = 0;
     long flipperUpDelay = 0;
@@ -43,7 +46,7 @@ public class BatBotSmart extends BatBot
             joinedTelemetry.addData("shootPressed", shootPressed);
             joinedTelemetry.addData("isOnTarget", isOnTarget);
             joinedTelemetry.addData("lastDetect", now);
-            if (shooterTriggerPressed && shootPressed == 0 && isOnTarget && lastDetect == now) {
+            if (shooterTriggerPressed && shootPressed == 0 && isOnTarget && (now - lastDetect) <= 150) {
                 if (indexerContents[indexerIndex] == STEMperFiConstants.GB_LED_OFF) {
                     if (indexerContents[2] != STEMperFiConstants.GB_LED_OFF) {
                       setIndexerPosition(2);
@@ -130,6 +133,49 @@ public class BatBotSmart extends BatBot
                 setIndexerPosition(nextEmptySlot());
             }
         }
+    }
+    public void autoHealSlotState() {
+        // Skip heal while system is busy
+        if (intakeOn || shootPressed > 0 || now <= indexerMoveDelay) return;
+
+        // Physical truth (already debounced inside isBallIn())
+        boolean present = isBallIn();
+
+        // Slot state truth (GB_LED_OFF == empty)
+        boolean stateEmpty = (indexerContents[indexerIndex] == STEMperFiConstants.GB_LED_OFF);
+
+        // Case A: ball is physically present but slot is marked empty -> restore after a few loops
+        if (present && stateEmpty) {
+            healPresentLoops++;
+            healEmptyLoops = 0;
+
+            if (healPresentLoops >= 3) {  // minimal bounce check
+                double ballColor = determineColor();
+                indexerContents[indexerIndex] = ballColor;
+
+                joinedTelemetry.addLine("AUTOHEAL: restored slot state (present but empty)");
+                healPresentLoops = 0;
+            }
+            return;
+        }
+
+        // Case B: ball is physically absent but slot is marked filled -> clear after a few loops
+        if (!present && !stateEmpty) {
+            healEmptyLoops++;
+            healPresentLoops = 0;
+
+            if (healEmptyLoops >= 5) {	// slightly more conservative for clearing
+                indexerContents[indexerIndex] = STEMperFiConstants.GB_LED_OFF;
+
+                joinedTelemetry.addLine("AUTOHEAL: cleared slot state (empty confirmed)");
+                healEmptyLoops = 0;
+            }
+            return;
+        }
+
+        // No mismatch -> reset counters
+        healPresentLoops = 0;
+        healEmptyLoops = 0;
     }
 
 }

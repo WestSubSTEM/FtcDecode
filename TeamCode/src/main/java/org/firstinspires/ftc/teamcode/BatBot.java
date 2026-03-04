@@ -435,7 +435,7 @@ public class BatBot
 
     public int intakeDetectCycleCount = 0;
     public boolean isBallIn() {
-        if (intakeOn && !isIndexerMoving()) {
+        if (!isIndexerMoving()) {
             int sensorCount = (((DistanceSensor) cs2).getDistance(DistanceUnit.CM) < STEMperFiConstants.BALL_DETECTION_DISTANCE_CM) ? 1 : 0;
             sensorCount += laserLeft.getState() ? 1 : 0;
             sensorCount += laserRight.getState() ? 1 : 0;
