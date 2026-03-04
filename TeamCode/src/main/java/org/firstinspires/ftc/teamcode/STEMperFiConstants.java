@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class STEMperFiConstants {
+
+    public static final int ON_TARGET_CYCLE_COUNT = 4;
     public static final int INTAKE_CYCLE_COUNT_BALL_IS_IN = 3;
     public static final double TURRET_ENCODER_COUNTS_PER_REV = 8192;
     public static final double TURRET_SMALL_PULLY_TEETH_PER_REV = 60;
@@ -37,9 +39,9 @@ public class STEMperFiConstants {
     public static final double FLIPPER_INTAKE = 0.45;
     public static final double FLIPPER_SHOOT = .25;
 
-    public static final double INDEX_1 = .8;
+    public static final double INDEX_1 = .82;
     public static final double INDEX_2 = .4;
-    public static final double INDEX_3 = 0.02;
+    public static final double INDEX_3 = 0.00;
 
     public static final List<Double> INDEXES = Arrays.asList(INDEX_1, INDEX_2, INDEX_3);
 
@@ -52,7 +54,7 @@ public class STEMperFiConstants {
     public static final int[] AUTO_SHOTS_22_PGP = {1, 0, 2};
     public static final int[] AUTO_SHOTS_23_PPG = {2, 1, 0};
 
-    public static final long INTAKE_DURING_INDEXER_MOVE_DELAY_MS = 200;
+    public static final long INTAKE_DURING_INDEXER_MOVE_DELAY_MS = 300;
 
     public static final double GB_LED_OFF = 0;
     public static final double GB_LED_RED = 0.28;

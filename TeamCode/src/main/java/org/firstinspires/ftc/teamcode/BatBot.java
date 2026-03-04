@@ -53,7 +53,7 @@ public class BatBot
 //    public ButtonReader square2ButtonReader, triangle2ButtonReader, circle2ButtonReader, x2ButtonReader, rightBumper2Reader, dUp2ButtonReader, dDown2ButtonReader, dLeft2ButtonReader, dRight2ButtonReader, leftStick2ButtonReader, rightStick2ButtonReader;
     public Servo flipperServo;
     public Servo indexerServo, hoodServo;
-    public Servo pinkLed, blueLed, yellowLed;
+    public Servo pinkLed, blueLed, yellowLed, lockLed;
     public Servo[] indexerLeds;
     public double hoodPosition = 1.0;
     public double flipperServoPosition = STEMperFiConstants.FLIPPER_INTAKE;
@@ -159,6 +159,8 @@ public class BatBot
         blueLed =  hardwareMap.get(Servo.class, "blueLed");
         pinkLed =  hardwareMap.get(Servo.class, "pinkLed");
         yellowLed =  hardwareMap.get(Servo.class, "yellowLed");
+        lockLed =  hardwareMap.get(Servo.class, "lockLed");
+        lockLed.setPosition(STEMperFiConstants.GB_LED_OFF);
         indexerLeds = new Servo[] {blueLed, pinkLed, yellowLed};
 
         turretMotor = hardwareMap.get(DcMotorEx.class, "lazy");
@@ -340,7 +342,7 @@ public class BatBot
         now = System.currentTimeMillis();
         gp1.readButtons();
         gp2.readButtons();
-        shooterTriggerPressed = gp2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.2;
+        shooterTriggerPressed = gp2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.2 && (lockedCycleCount > STEMperFiConstants.ON_TARGET_CYCLE_COUNT && lastDetect != 0);
         joinedTelemetry.addData("index", indexerIndex);
         joinedTelemetry.addData("colors", getColorString());
         setIndexerLeds();
@@ -554,10 +556,17 @@ public class BatBot
         turretTargetPosition = newPosition;
     }
 
+    int lockedCycleCount = 0;
     public boolean setTurretPower() {
         int currentPosition = -turretMotor.getCurrentPosition();
         int dif = turretTargetPosition - currentPosition;
         isOnTarget = Math.abs(dif) < STEMperFiConstants.TURRET_TARGET_DELTA;
+        lockedCycleCount = (isOnTarget & lastDetect != 0) ? lockedCycleCount + 1 : 0;
+        if (lockedCycleCount > STEMperFiConstants.ON_TARGET_CYCLE_COUNT) {
+            lockLed.setPosition(STEMperFiConstants.GB_LED_RED);
+        } else {
+            lockLed.setPosition(STEMperFiConstants.GB_LED_OFF);
+        }
         double newTurretPower = STEMperFiConstants.TURRET_MOTOR_POWER_MAX * 1.8 * (((double)dif) / (double)STEMperFiConstants.TURRET_MAX_TICKS);
         newTurretPower = Math.min(STEMperFiConstants.TURRET_MOTOR_POWER_MAX, newTurretPower);
         newTurretPower = Math.max(-STEMperFiConstants.TURRET_MOTOR_POWER_MAX, newTurretPower);
@@ -589,6 +598,7 @@ public class BatBot
                 return setTurretPower();
             }
         } else if (timeout > 0 && now - lastDetect > timeout) {
+            lastDetect = 0;
             //joinedTelemetry.addLine("April Tag not detected.");
             //joinedTelemetry.addLine("April Tag not detected.");
             turretTargetPosition = 0;
