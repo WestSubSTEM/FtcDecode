@@ -8,17 +8,15 @@ import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.Prism.Color;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
-@Disabled
-@Autonomous(name="Auto Red Far Pedro", group="Qual Far")
+
+@Autonomous(name="Auto Red Far Pedro", group="State")
 public class AutoRedFarPedro extends OpMode {
     private TelemetryManager panelsTelemetry; // Panels Telemetry instance
     public Follower follower; // Pedro Pathing follower instance
@@ -27,6 +25,8 @@ public class AutoRedFarPedro extends OpMode {
     public final ElapsedTime runtime = new ElapsedTime();
     public final ElapsedTime stateTime = new ElapsedTime();
     private final BatBotSmart robot = new BatBotSmart();
+
+    private final com.qualcomm.robotcore.hardware.Gamepad autoGamepad = new com.qualcomm.robotcore.hardware.Gamepad();
 
     JoinedTelemetry joinedTelemetry = new JoinedTelemetry(telemetry, PanelsTelemetry.INSTANCE.getFtcTelemetry());
 
@@ -44,6 +44,13 @@ public class AutoRedFarPedro extends OpMode {
         FIRE_4,
         FIRE_5,
         FIRE_6,
+        MOVE_TO_CORNER,
+        COLLECT_CORNER,
+        COLLECT_CORNER_TWIST,
+        MOVE_TO_FIRE_3,
+        FIRE_7,
+        FIRE_8,
+        FIRE_9,
         PARK,
         END
     }
@@ -57,22 +64,22 @@ public class AutoRedFarPedro extends OpMode {
 
     @Override
     public void init() {
-        panelsTelemetry = PanelsTelemetry.INSTANCE.getTelemetry();
-        joinedTelemetry = new JoinedTelemetry(telemetry);
         robot.init(hardwareMap, gamepad1, gamepad2, joinedTelemetry, blackboard);
-
+        robot.turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        robot.turretMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(startingPose);
 
         paths = new AutoRedFarPedro.Paths(follower); // Build paths
 
         if (robot.detectAutoPattern()) {
-            telemetry.addData("pattern", robot.pattern);
+            joinedTelemetry.addData("pattern", robot.pattern);
         } else {
-            telemetry.addData("pattern", "no pattern");
+            joinedTelemetry.addData("pattern", "no pattern");
         }
-        telemetry.addData(">", "Robot Heading = %4.0f", robot.odo.getHeading(AngleUnit.DEGREES));
-        telemetry.update();
+        joinedTelemetry.addData(">", "Robot Heading = %4.0f", robot.odo.getHeading(AngleUnit.DEGREES));
+        joinedTelemetry.update();
         robot.startLoop();
         robot.indexer(true);
 
@@ -91,8 +98,7 @@ public class AutoRedFarPedro extends OpMode {
         robot.indexerContents[1] = STEMperFiConstants.GB_LED_PURPLE;
         robot.indexerContents[2] = STEMperFiConstants.GB_LED_PURPLE;
 
-        panelsTelemetry.debug("Status", "Initialized");
-        panelsTelemetry.update(telemetry);
+        joinedTelemetry.update();
     }
 
     /*
@@ -101,69 +107,110 @@ public class AutoRedFarPedro extends OpMode {
     @Override
     public void init_loop() {
         if (robot.detectAutoPattern()) {
-            telemetry.addData("pattern", robot.pattern);
+            joinedTelemetry.addData("pattern", robot.pattern);
         } else {
-            telemetry.addData("pattern", "no pattern");
+            joinedTelemetry.addData("pattern", "no pattern");
         }
-        telemetry.addData(">", "Robot Heading = %4.0f", robot.odo.getHeading(AngleUnit.DEGREES));
-        telemetry.update();
+        joinedTelemetry.addData(">", "Robot Heading = %4.0f", robot.odo.getHeading(AngleUnit.DEGREES));
+        joinedTelemetry.update();
         robot.startLoop();
         robot.indexer(true);
 
-        panelsTelemetry.debug("Status", "Initialized");
-        panelsTelemetry.update(telemetry);
+        joinedTelemetry.update();
+    }
+    @Override
 
+    public void start() {
+        //robot.gp2 = new GamepadEx(autoGamepad);
+        currentState = FarStates.MOVE_TO_FIRE;
+        robot.shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_MED;
+        robot.hoodPosition = STEMperFiConstants.HOOD_RELATIVE_ANGLE_MED;
+        if (STEMperFiConstants.PATTERN_22_PGP.equals(robot.pattern)) {
+            shotOrder = STEMperFiConstants.AUTO_SHOTS_22_PGP;
+        } else if (STEMperFiConstants.PATTERN_23_PPG.equals(robot.pattern)) {
+            shotOrder = STEMperFiConstants.AUTO_SHOTS_23_PPG;
+        }
+        robot.limelight.pipelineSwitch(robot.isRed ? STEMperFiConstants.LIMELIGHT_PIPELINE_RED : STEMperFiConstants.LIMELIGHT_PIPELINE_BLUE);
+        robot.limelight.start();
+        robot.setIndexerPosition(shotOrder[0]);
+        follower.followPath(paths.toFire1Red, 0.3, true);
+        runtime.reset();
+        stateTime.reset();
     }
 
     @Override
     public void loop() {
-        follower.update(); // Update Pedro Pathing
         robot.startLoop();
-        currentState = autonomousPathUpdate() ;
+
+        // INTAKE
+        robot.intake();
+
+        // FLYWHEEL
         robot.flywheel();
-        robot.detectGoal(0);
+
+        if (currentState != FarStates.PARK) {
+            robot.detectGoal(0);
+        } else {
+            robot.turretTargetPosition = 0;
+        }
+
         robot.setTurretPower();
+
+        follower.update(); // Update Pedro Pathing
+
+        currentState = autonomousPathUpdate() ;
+
+
         // Log values to Panels and Driver Station
-        panelsTelemetry.debug("State", currentState);
+        joinedTelemetry.addData("State", currentState);
 //        panelsTelemetry.debug("X", follower.getPose().getX());
 //        panelsTelemetry.debug("Y", follower.getPose().getY());
 //        panelsTelemetry.debug("Heading", follower.getPose().getHeading());
-        panelsTelemetry.update(telemetry);
-    }
-
-    public FarStates fire(FarStates cur, FarStates next, int nextIndexPosition) {
-        //robot.detectGoal(0);
-        robot.intakeMotor.setPower(1);
-        if (stateTime.milliseconds() > 1_250) {
-            robot.intakeMotor.setPower(0);
-            stateTime.reset();
-            return next;
-        } else if (stateTime.milliseconds() > 1_000) {
-            robot.setIndexerPosition(nextIndexPosition);
-        } else if (stateTime.milliseconds() > 500) {
-            robot.flipperServo.setPosition(STEMperFiConstants.FLIPPER_INTAKE);
-        } else {
-            robot.flipperServo.setPosition(STEMperFiConstants.FLIPPER_SHOOT);
+        joinedTelemetry.update();
+        if (currentState == FarStates.END) {
+            stop();
         }
-        return cur;
+
     }
 
-    public FarStates intake(FarStates cur, FarStates next, int nextIndexPosition) {
-        robot.intakeMotor.setPower(1);
-        //if (robot.isBallIn())
+    boolean ballShot = false;
+    public FarStates fire(FarStates cur, FarStates next, int nextIndexPosition) {
+        joinedTelemetry.addData("fire stateTime", stateTime.milliseconds());
+        joinedTelemetry.addData("fire ballShot", ballShot);
+        if (stateTime.milliseconds() > 1_500) {
+            stateTime.reset();
+            ballShot = false;
+            return next;
+        } else if (stateTime.milliseconds() > STEMperFiConstants.INTAKE_DURING_INDEXER_MOVE_DELAY_MS + (STEMperFiConstants.SHOOT_DELAY_INDEX_MS * 2)) {
+            joinedTelemetry.addData("fire indexer", nextIndexPosition);
+            robot.setIndexerPosition(nextIndexPosition);
+        } else if (stateTime.milliseconds() > STEMperFiConstants.SHOOT_DELAY_INDEX_MS*2) {
+            joinedTelemetry.addData("fire flipper down", STEMperFiConstants.FLIPPER_INTAKE);
+            robot.flipperServo.setPosition(STEMperFiConstants.FLIPPER_INTAKE);
+        } else if (robot.lockLed.getPosition() != STEMperFiConstants.GB_LED_OFF) {
+            joinedTelemetry.addData("fire flipper up", STEMperFiConstants.FLIPPER_SHOOT);
+            robot.flipperServo.setPosition(STEMperFiConstants.FLIPPER_SHOOT);
+            ballShot = true;
+        } else if (!ballShot) {
+            stateTime.reset();
+        }
         return cur;
     }
 
     public FarStates autonomousPathUpdate() {
         switch (currentState) {
             case MOVE_TO_FIRE:
-                robot.detectGoal(0);
-                telemetry.addData("isBusy", follower.isBusy());
-                telemetry.addData("stateTime", stateTime.milliseconds());
-                telemetry.addData("onTarget", robot.isOnTarget);
-                telemetry.addData("detect", robot.lastDetect == robot.now);
-                if (!follower.isBusy() && stateTime.milliseconds() > 3_000 && robot.isOnTarget) {
+                robot.autoTriggerPressed = false;
+                robot.setIndexerPosition(shotOrder[0]);
+                robot.indexerServo.setPosition(robot.indexerServoPosition);
+                joinedTelemetry.addData("isBusy", follower.isBusy());
+                joinedTelemetry.addData("stateTime", stateTime.milliseconds());
+                joinedTelemetry.addData("onTarget", robot.isTurretStopped);
+                joinedTelemetry.addData("detect", robot.isGoalDetected);
+                if (!follower.isBusy() && stateTime.milliseconds() > 6_000 && robot.isTurretStopped) {
+                    robot.autoTriggerPressed = true;
                     stateTime.reset();
+                    ballShot = false;
                     return FarStates.FIRE_1;
                 }
                 return FarStates.MOVE_TO_FIRE;
@@ -174,24 +221,114 @@ public class AutoRedFarPedro extends OpMode {
             case FIRE_3:
                 FarStates temp = fire(FarStates.FIRE_3, FarStates.MOVE_TO_BALLS, shotOrder[0]);
                 if (temp == FarStates.MOVE_TO_BALLS) {
-                    follower.followPath(paths.toLoadRed, .4, true);
+                    robot.autoTriggerPressed = false;
+                    follower.followPath(paths.toLoadRed, .6, true);
                 }
+                return temp;
             case MOVE_TO_BALLS:
+                robot.indexerContents[0] = STEMperFiConstants.GB_LED_OFF;
+                robot.indexerContents[1] = STEMperFiConstants.GB_LED_OFF;
+                robot.indexerContents[2] = STEMperFiConstants.GB_LED_OFF;
+                robot.setIndexerPosition(0);
                 if (follower.isBusy()) {
                     return FarStates.MOVE_TO_BALLS;
                 }
                 stateTime.reset();
-                robot.intakeMotor.setPower(1);
-                follower.followPath(paths.loadRed, .4, true);
+                robot.intakeOn = true;
+                follower.followPath(paths.loadRed, .2, true);
                 return FarStates.COLLECT_BALLS;
             case COLLECT_BALLS:
-
+                if (follower.isBusy()) {
+                    return FarStates.COLLECT_BALLS;
+                }
+                stateTime.reset();
+                robot.intakeOn = false;
+                follower.followPath(paths.toFire2Red, .6, true);
+                return FarStates.MOVE_TO_FIRE_2;
+            case MOVE_TO_FIRE_2:
+                if (follower.isBusy()) {
+                    robot.setIndexerPosition(shotOrder[0]);
+                    return FarStates.MOVE_TO_FIRE_2;
+                }
+                stateTime.reset();
+                robot.autoTriggerPressed = true;
+                return FarStates.FIRE_4;
+            case FIRE_4:
+                return fire(FarStates.FIRE_4, FarStates.FIRE_5, shotOrder[1]);
+            case FIRE_5:
+                return fire(FarStates.FIRE_5, FarStates.FIRE_6, shotOrder[2]);
+            case FIRE_6:
+                FarStates temp2 = fire(FarStates.FIRE_6, FarStates.PARK, shotOrder[0]);
+                if (temp2 == FarStates.PARK) {
+                    stateTime.reset();
+                    robot.autoTriggerPressed = false;
+                    follower.followPath(paths.toParkRed, .6, true);
+                }
+                return temp2;
+//            case MOVE_TO_CORNER:
+//                robot.indexerContents[0] = STEMperFiConstants.GB_LED_OFF;
+//                robot.indexerContents[1] = STEMperFiConstants.GB_LED_OFF;
+//                robot.indexerContents[2] = STEMperFiConstants.GB_LED_OFF;
+//                if (follower.isBusy()) {
+//                    return FarStates.MOVE_TO_CORNER;
+//                }
+//                stateTime.reset();
+//                robot.intakeOn = true;
+//                follower.followPath(paths.loadCorner, .2, true);
+//                return FarStates.COLLECT_CORNER;
+//            case COLLECT_CORNER:
+//                if (stateTime.milliseconds() > 1_000) {
+//                    follower.breakFollowing();
+//                    Pose currentPose = follower.getPose();
+//                    PathChain tempChain = follower.pathBuilder()
+//                            .addPath(new BezierLine(currentPose, new Pose(120, 0)))
+//                            .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-30)).build();
+//                    follower.followPath(tempChain);
+//                    stateTime.reset();
+//                    return FarStates.COLLECT_CORNER_TWIST;
+//                }
+//                if (follower.isBusy()) {
+//                    return FarStates.COLLECT_CORNER;
+//                }
+//            case COLLECT_CORNER_TWIST:
+//                if (stateTime.milliseconds() > 1_000) {
+//                    follower.breakFollowing();
+//                    Pose currentPose = follower.getPose();
+//                    PathChain tempChain = follower.pathBuilder()
+//                            .addPath(new BezierLine(currentPose, new Pose(83.000, 17)))
+//                            .setLinearHeadingInterpolation(Math.toRadians(-30), Math.toRadians(63)).build();
+//                    follower.followPath(tempChain);
+//                    stateTime.reset();
+//                    robot.intakeOn = false;
+//                    return FarStates.MOVE_TO_FIRE_3;
+//                }
+//                return FarStates.COLLECT_CORNER_TWIST;
+//            case MOVE_TO_FIRE_3:
+//                robot.autoTriggerPressed = true;
+//                if (follower.isBusy()) {
+//                    return FarStates.MOVE_TO_FIRE_3;
+//                }
+//                stateTime.reset();
+//                return FarStates.FIRE_7;
+//            case FIRE_7:
+//                return fire(FarStates.FIRE_7, FarStates.FIRE_8, shotOrder[1]);
+//            case FIRE_8:
+//                return fire(FarStates.FIRE_8, FarStates.FIRE_9, shotOrder[2]);
+//            case FIRE_9:
+//                FarStates temp3 = fire(FarStates.FIRE_9, FarStates.PARK, shotOrder[0]);
+//                if (temp3 == FarStates.PARK) {
+//                    stateTime.reset();
+//                    robot.autoTriggerPressed = false;
+//                    follower.followPath(paths.toParkRed, .6, true);
+//                }
+//                return temp3;
             case PARK:
                 robot.shooterSpeed = 0;
+                robot.fwBotMotor.set(0);
+                robot.fwBotMotor.stopMotor();
                 if (follower.isBusy()) {
                     return FarStates.PARK;
                 }
-                stop();
                 return FarStates.END;
         }
         // Add your state machine Here
@@ -200,25 +337,6 @@ public class AutoRedFarPedro extends OpMode {
         return FarStates.END;
     }
 
-    @Override
-    public void start() {
-        currentState =FarStates.MOVE_TO_FIRE;
-        robot.shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_MED;
-        robot.hoodPosition = STEMperFiConstants.HOOD_RELATIVE_ANGLE_MED;
-        robot.flywheel();
-        runtime.reset();
-        stateTime.reset();
-        if (STEMperFiConstants.PATTERN_22_PGP.equals(robot.pattern)) {
-            shotOrder = STEMperFiConstants.AUTO_SHOTS_22_PGP;
-        } else if (STEMperFiConstants.PATTERN_23_PPG.equals(robot.pattern)) {
-            shotOrder = STEMperFiConstants.AUTO_SHOTS_23_PPG;
-        }
-        robot.limelight.pipelineSwitch(robot.isRed ? STEMperFiConstants.LIMELIGHT_PIPELINE_RED : STEMperFiConstants.LIMELIGHT_PIPELINE_BLUE);
-        robot.limelight.start();
-        runtime.reset();
-        robot.setIndexerPosition(shotOrder[0]);
-        follower.followPath(paths.toFire1Red, 0.3, true);
-    }
 
 
     public static class Paths {
@@ -226,6 +344,8 @@ public class AutoRedFarPedro extends OpMode {
         public PathChain toLoadRed;
         public PathChain loadRed;
         public PathChain toFire2Red;
+        public PathChain toLoadCorner;
+        public PathChain loadCorner;
         public PathChain toParkRed;
 
         public Paths(Follower follower) {
@@ -234,19 +354,27 @@ public class AutoRedFarPedro extends OpMode {
                     .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(63)).build();
 
             toLoadRed = follower.pathBuilder()
-                    .addPath(new BezierLine(new Pose(83.000, 17), new Pose(97.000, 35.500)))
+                    .addPath(new BezierLine(new Pose(83.000, 17), new Pose(89.000, 22)))
                     .setLinearHeadingInterpolation(Math.toRadians(63), Math.toRadians(0)).build();
 
             loadRed = follower.pathBuilder()
-                    .addPath(new BezierLine(new Pose(97.000, 35.500), new Pose(129.000, 35.500)))
+                    .addPath(new BezierLine(new Pose(89.000, 22), new Pose(115.000, 22)))
                     .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0)).build();
 
             toFire2Red = follower.pathBuilder()
-                    .addPath(new BezierLine(new Pose(129.000, 35.500), new Pose(83.000, 12.000)))
+                    .addPath(new BezierLine(new Pose(115, 22), new Pose(83.000, 17)))
                     .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(63)).build();
 
+            toLoadCorner = follower.pathBuilder()
+                    .addPath(new BezierLine(new Pose(83.000, 17), new Pose(110, 0)))
+                    .setLinearHeadingInterpolation(Math.toRadians(63), Math.toRadians(0)).build();
+
+            loadCorner = follower.pathBuilder()
+                    .addPath(new BezierLine(new Pose(110, 0), new Pose(120, 0)))
+                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0)).build();
+
             toParkRed = follower.pathBuilder()
-                    .addPath(new BezierLine(new Pose(83.000, 12.000), new Pose(102.000, 28.000)))
+                    .addPath(new BezierLine(new Pose(83.000, 17), new Pose(110, 0)))
                     .setLinearHeadingInterpolation(Math.toRadians(63), Math.toRadians(0)).build();
         }
     }

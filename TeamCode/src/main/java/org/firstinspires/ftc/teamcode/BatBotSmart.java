@@ -44,9 +44,9 @@ public class BatBotSmart extends BatBot
             }
             joinedTelemetry.addData("shooterTriggerPressed", shooterTriggerPressed);
             joinedTelemetry.addData("shootPressed", shootPressed);
-            joinedTelemetry.addData("isOnTarget", isOnTarget);
+            joinedTelemetry.addData("isOnTarget", isTurretStopped);
             joinedTelemetry.addData("lastDetect", now);
-            if (shooterTriggerPressed && shootPressed == 0 && isOnTarget && (now - lastDetect) <= 150) {
+            if (shooterTriggerPressed && shootPressed == 0 && isTurretStopped && (now - lastDetect) <= 150) {
                 if (indexerContents[indexerIndex] == STEMperFiConstants.GB_LED_OFF) {
                     if (indexerContents[2] != STEMperFiConstants.GB_LED_OFF) {
                       setIndexerPosition(2);
@@ -91,7 +91,7 @@ public class BatBotSmart extends BatBot
             }
             joinedTelemetry.addData("shooterTriggerPressed", shooterTriggerPressed);
             joinedTelemetry.addData("shootPressed", shootPressed);
-            joinedTelemetry.addData("isOnTarget", isOnTarget);
+            joinedTelemetry.addData("isOnTarget", isTurretStopped);
             joinedTelemetry.addData("lastDetect", now);
             if (shooterTriggerPressed && shootPressed == 0) {
                 shootPressed = now;

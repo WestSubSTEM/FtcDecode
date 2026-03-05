@@ -334,6 +334,7 @@ public class BatBot
         }
     }
 
+    boolean autoTriggerPressed = false;
     public void startLoop() {
         // This clears the cache for the hardware
         // Refer to https://gm0.org/en/latest/docs/software/control-system-internals.html#bulk-reads
@@ -342,7 +343,7 @@ public class BatBot
         now = System.currentTimeMillis();
         gp1.readButtons();
         gp2.readButtons();
-        shooterTriggerPressed = gp2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.2 && (lockedCycleCount > STEMperFiConstants.ON_TARGET_CYCLE_COUNT && lastDetect != 0);
+        shooterTriggerPressed = autoTriggerPressed || (gp2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.2 && (lockedCycleCount > STEMperFiConstants.ON_TARGET_CYCLE_COUNT && lastDetect != 0));
         joinedTelemetry.addData("index", indexerIndex);
         joinedTelemetry.addData("colors", getColorString());
         setIndexerLeds();
@@ -500,7 +501,7 @@ public class BatBot
         if (fwBotMotor.motor.getPower() > .8) {
             fwBotMotor.motor.setPower(.8);
         }
-        //joinedTelemetry.addData("getPower", getPower);
+        joinedTelemetry.addData("getPower", getPower);
         //joinedTelemetry.update();
     }
 //    public void manualTurret () {
@@ -557,12 +558,14 @@ public class BatBot
     }
 
     int lockedCycleCount = 0;
+
+    boolean isTurretStopped = false;
     public boolean setTurretPower() {
         int currentPosition = -turretMotor.getCurrentPosition();
         int dif = turretTargetPosition - currentPosition;
-        isOnTarget = Math.abs(dif) < STEMperFiConstants.TURRET_TARGET_DELTA;
-        lockedCycleCount = (isOnTarget & lastDetect != 0) ? lockedCycleCount + 1 : 0;
-        if (lockedCycleCount > STEMperFiConstants.ON_TARGET_CYCLE_COUNT) {
+        isTurretStopped = Math.abs(dif) < STEMperFiConstants.TURRET_TARGET_DELTA;
+        lockedCycleCount = (isTurretStopped & isGoalDetected) ? lockedCycleCount + 1 : 0;
+        if (lockedCycleCount >= STEMperFiConstants.ON_TARGET_CYCLE_COUNT) {
             lockLed.setPosition(STEMperFiConstants.GB_LED_RED);
         } else {
             lockLed.setPosition(STEMperFiConstants.GB_LED_OFF);
@@ -572,23 +575,25 @@ public class BatBot
         newTurretPower = Math.max(-STEMperFiConstants.TURRET_MOTOR_POWER_MAX, newTurretPower);
         newTurretPower = newTurretPower > 0 && newTurretPower < STEMperFiConstants.TURRET_MOTOR_POWER_MIN ? STEMperFiConstants.TURRET_MOTOR_POWER_MIN : newTurretPower;
         newTurretPower = newTurretPower < 0 && newTurretPower > -STEMperFiConstants.TURRET_MOTOR_POWER_MIN ? -STEMperFiConstants.TURRET_MOTOR_POWER_MIN : newTurretPower;
-        if (isOnTarget) {
+        if (isTurretStopped) {
             newTurretPower = 0;
         }
         turretMotor.setPower(newTurretPower);
         //joinedTelemetry.addData("current  Pos: ", currentPosition);
         //joinedTelemetry.addData("turret Power: ", newTurretPower);
-        return isOnTarget;
+        return isTurretStopped;
     }
 
-    boolean isOnTarget = false;
+    boolean isGoalDetected = false;
     public boolean detectGoal(long timeout) {
+        isGoalDetected = false;
         LLResult result = limelight.getLatestResult();
         if (result.isValid()) {
             List<LLResultTypes.FiducialResult> fiducialResults = result.getFiducialResults();
             LLResultTypes.FiducialResult fiducialResult = fiducialResults.get(0);
             if (fiducialResult != null) {
                 lastDetect = now;
+                isGoalDetected = true;
                 double xDif = -fiducialResult.getTargetXDegrees();
                 double xPixDif = fiducialResult.getTargetXPixels();
                 double xNoCrossDif = fiducialResult.getTargetXDegreesNoCrosshair();
