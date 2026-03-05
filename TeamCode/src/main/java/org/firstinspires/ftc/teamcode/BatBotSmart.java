@@ -42,11 +42,11 @@ public class BatBotSmart extends BatBot
                 flipperServo.setPosition(flipperServoPosition);
                 return;
             }
-            joinedTelemetry.addData("shooterTriggerPressed", shooterTriggerPressed);
+            joinedTelemetry.addData("shooterTriggerPressed", isShooterTriggerPressed);
             joinedTelemetry.addData("shootPressed", shootPressed);
             joinedTelemetry.addData("isOnTarget", isTurretStopped);
             joinedTelemetry.addData("lastDetect", now);
-            if (shooterTriggerPressed && shootPressed == 0 && isTurretStopped && (now - lastDetect) <= 150) {
+            if (isShooterTriggerPressed && shootPressed == 0 && isTurretStopped && (now - lastDetect) <= 150) {
                 if (indexerContents[indexerIndex] == STEMperFiConstants.GB_LED_OFF) {
                     if (indexerContents[2] != STEMperFiConstants.GB_LED_OFF) {
                       setIndexerPosition(2);
@@ -89,11 +89,11 @@ public class BatBotSmart extends BatBot
                 flipperServo.setPosition(flipperServoPosition);
                 return;
             }
-            joinedTelemetry.addData("shooterTriggerPressed", shooterTriggerPressed);
+            joinedTelemetry.addData("shooterTriggerPressed", isShooterTriggerPressed);
             joinedTelemetry.addData("shootPressed", shootPressed);
             joinedTelemetry.addData("isOnTarget", isTurretStopped);
             joinedTelemetry.addData("lastDetect", now);
-            if (shooterTriggerPressed && shootPressed == 0) {
+            if (isShooterTriggerPressed && shootPressed == 0) {
                 shootPressed = now;
                 flipperUpDelay = now + 500;
                 flipperDownDelay = now + (500 * 2);
@@ -117,7 +117,7 @@ public class BatBotSmart extends BatBot
 
         double leftTrigger = gp2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER);
         double intakePower = 0;
-        if (intakeOn || shooterTriggerPressed || now < indexerMoveDelay) {
+        if (intakeOn || isShooterTriggerPressed || now < indexerMoveDelay) {
             intakePower = 1;
         } else if (leftTrigger > 0.2) {
             intakePower = -leftTrigger;

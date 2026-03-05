@@ -63,7 +63,7 @@ public class BatBot
     public int indexerIndex = 0;
     public long odoResetTimeMS = 0;
     public double shooterSpeed = 0;
-    public boolean shooterTriggerPressed = false;
+    public boolean isShooterTriggerPressed = false;
     public long now = System.currentTimeMillis();
     public List<LynxModule> hubs;
     public Gamepad gamepad1, gamepad2;
@@ -156,9 +156,9 @@ public class BatBot
         flipperServo = hardwareMap.get(Servo.class, "flipper");
         flipperServo.setPosition(flipperServoPosition);
         indexerServo = hardwareMap.get(Servo.class, "indexer");
-        blueLed =  hardwareMap.get(Servo.class, "blueLed");
-        pinkLed =  hardwareMap.get(Servo.class, "pinkLed");
-        yellowLed =  hardwareMap.get(Servo.class, "yellowLed");
+        pinkLed =  hardwareMap.get(Servo.class, "blueLed");
+        blueLed =  hardwareMap.get(Servo.class, "yellowLed");
+        yellowLed =  hardwareMap.get(Servo.class, "pinkLed");
         lockLed =  hardwareMap.get(Servo.class, "lockLed");
         lockLed.setPosition(STEMperFiConstants.GB_LED_OFF);
         indexerLeds = new Servo[] {blueLed, pinkLed, yellowLed};
@@ -238,15 +238,14 @@ public class BatBot
         }
         if (indexNew >= 0 && indexNew < 3) {
             if (isInit) {
-                if (initCount == 0) {
+                if (indexerIndex == 0) {
                     cs2RgbaGreen = cs2.getNormalizedColors();
                     blackboard.put(STEMperFiConstants.BLACKBOARD_KEY_CS2_GREEN, cs2RgbaGreen);
-                    initCount++;
-                } else if (initCount == 1) {
+                } else {
                     cs2RgbaPurple = cs2.getNormalizedColors();
                     blackboard.put(STEMperFiConstants.BLACKBOARD_KEY_CS2_PURPLE, cs2RgbaPurple);
-                    hasBlackboardColors = true;
                 }
+                hasBlackboardColors = cs2RgbaGreen != null && cs2RgbaPurple != null;
             }
             double indexerServoPositionNew = STEMperFiConstants.INDEXES.get(indexNew);
             if (indexerServoPositionNew != indexerServoPosition) {
@@ -334,7 +333,7 @@ public class BatBot
         }
     }
 
-    boolean autoTriggerPressed = false;
+    boolean isAutoShooterTriggerPressed = false;
     public void startLoop() {
         // This clears the cache for the hardware
         // Refer to https://gm0.org/en/latest/docs/software/control-system-internals.html#bulk-reads
@@ -343,14 +342,14 @@ public class BatBot
         now = System.currentTimeMillis();
         gp1.readButtons();
         gp2.readButtons();
-        shooterTriggerPressed = autoTriggerPressed || (gp2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.2 && (lockedCycleCount > STEMperFiConstants.ON_TARGET_CYCLE_COUNT && lastDetect != 0));
+        isShooterTriggerPressed = isAutoShooterTriggerPressed || (gp2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.2 && (lockedCycleCount > STEMperFiConstants.ON_TARGET_CYCLE_COUNT && lastDetect != 0));
         joinedTelemetry.addData("index", indexerIndex);
         joinedTelemetry.addData("colors", getColorString());
         setIndexerLeds();
     }
 
     public void shoot() {
-        double newPosition = shooterTriggerPressed ? STEMperFiConstants.FLIPPER_SHOOT : STEMperFiConstants.FLIPPER_INTAKE;
+        double newPosition = isShooterTriggerPressed ? STEMperFiConstants.FLIPPER_SHOOT : STEMperFiConstants.FLIPPER_INTAKE;
         if (newPosition != flipperServoPosition) {
             indexDelayDueToShooting = now + STEMperFiConstants.SHOOT_DELAY_INDEX_MS;
         }
@@ -359,9 +358,9 @@ public class BatBot
     }
 
     //
-    private int initCount = 0;
+
     public void indexer(boolean isInit) {// INDEXER
-        if (!shooterTriggerPressed && !isShooting()) {
+        if (!isShooterTriggerPressed && !isShooting()) {
             if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
                 setIndexerPosition(1, isInit);
             } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
@@ -412,11 +411,6 @@ public class BatBot
             } else {
                 votePurple++;
             }
-//            if (c3GreenDif < c3PurpleDif) {
-//                voteGreen++;
-//            } else {
-//                votePurple++;
-//            }
             return voteGreen > votePurple ? STEMperFiConstants.GB_LED_GREEN : STEMperFiConstants.GB_LED_PURPLE;
         }
 
@@ -430,11 +424,6 @@ public class BatBot
         }
         return STEMperFiConstants.GB_LED_GREEN;
     }
-
-    public double getCurrentColor() {
-        return indexerContents[indexerIndex];
-    }
-
 
     public int intakeDetectCycleCount = 0;
     public boolean isBallIn() {
@@ -451,6 +440,12 @@ public class BatBot
             intakeDetectCycleCount = 0;
         }
         return intakeDetectCycleCount >= STEMperFiConstants.INTAKE_CYCLE_COUNT_BALL_IS_IN;
+    }
+
+    public void clearIndexer() {
+        indexerContents[0] = STEMperFiConstants.GB_LED_OFF;
+        indexerContents[1] = STEMperFiConstants.GB_LED_OFF;
+        indexerContents[2] = STEMperFiConstants.GB_LED_OFF;
     }
 
     public boolean isIndexerFull() {
@@ -541,8 +536,6 @@ public class BatBot
         turretTargetPosition = Math.max(turretTargetPosition, -STEMperFiConstants.TURRET_MAX_TICKS);
         //joinedTelemetry.addData("turretTargetPosition:",turretTargetPosition);
    }
-
-    long nextTurretUpdate = 0;
 
     public void adjustTurretTargetPosition(double xdif) {
         int currentPosition = -turretMotor.getCurrentPosition();

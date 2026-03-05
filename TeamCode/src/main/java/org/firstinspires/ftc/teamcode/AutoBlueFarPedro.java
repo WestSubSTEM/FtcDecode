@@ -16,8 +16,19 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.Prism.Color;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name="Red Far", group="State")
-public class AutoRedFarPedro extends OpMode {
+@Autonomous(name="Blue Far", group="State")
+public class AutoBlueFarPedro extends OpMode {
+
+//    AutoBlueFarPedro() {
+//        super();
+////        isRed = false;
+//        startingPose = new Pose(59, 8.25, Math.toRadians(90));
+//        shootingPose = new Pose(59, 17, Math.toRadians(117));
+//        toBallsPose = new Pose(53, 22, Math.toRadians(180));
+//        pickedUpBallsPose = new Pose(27, 22, Math.toRadians(180));
+//        shootingPose2 = new Pose(55, 17, Math.toRadians(117));
+//        parkPose = new Pose(42, 0, Math.toRadians(180));
+//    }
     private TelemetryManager panelsTelemetry; // Panels Telemetry instance
     public Follower follower; // Pedro Pathing follower instance
     // Declare OpMode members.
@@ -27,7 +38,7 @@ public class AutoRedFarPedro extends OpMode {
 
     JoinedTelemetry joinedTelemetry = new JoinedTelemetry(telemetry, PanelsTelemetry.INSTANCE.getFtcTelemetry());
 
-    public boolean isRed = true;
+    public boolean isRed = false;
 
     public enum FarStates {
         DETECT_PATTERN,
@@ -45,19 +56,26 @@ public class AutoRedFarPedro extends OpMode {
         END
     }
 
-    public Pose startingPose = new Pose(83, 8.25, Math.toRadians(90));
-    public Pose shootingPose = new Pose(83, 17, Math.toRadians(63));
-    public Pose toBallsPose = new Pose(89, 22, Math.toRadians(0));
-    public Pose pickedUpBallsPose = new Pose(115, 22, Math.toRadians(0));
-    public Pose shootingPose2 = new Pose(87, 17, Math.toRadians(63));
-    public Pose parkPose = new Pose(100, 0, Math.toRadians(0));
+//    public Pose startingPose = new Pose(83, 8.25, Math.toRadians(90));
+//    public Pose shootingPose = new Pose(83, 17, Math.toRadians(63));
+//    public Pose toBallsPose = new Pose(89, 22, Math.toRadians(0));
+//    public Pose pickedUpBallsPose = new Pose(115, 22, Math.toRadians(0));
+//    public Pose shootingPose2 = new Pose(87, 17, Math.toRadians(63));
+//    public Pose parkPose = new Pose(100, 0, Math.toRadians(0));
+
+    public Pose startingPose = new Pose(59, 8.25, Math.toRadians(90));
+    public Pose shootingPose = new Pose(59, 25, Math.toRadians(117));
+    public Pose toBallsPose = new Pose(32, 47, Math.toRadians(180));
+    public Pose pickedUpBallsPose = new Pose(10, 47, Math.toRadians(180));
+    public Pose shootingPose2 = new Pose(52, 24, Math.toRadians(117));
+    public Pose parkPose = new Pose(20, 19, Math.toRadians(180));
 
     public PathChain toFire1;
     public PathChain toLoad;
     public PathChain loadingBalls;
     public PathChain toFire2;
     public PathChain toPark;
-    public FarStates currentState = FarStates.DETECT_PATTERN;
+    public AutoRedFarPedro.FarStates currentState = AutoRedFarPedro.FarStates.DETECT_PATTERN;
     public int[] shotOrder = STEMperFiConstants.AUTO_SHOTS_21_GPP;
 
     @Override
@@ -83,11 +101,11 @@ public class AutoRedFarPedro extends OpMode {
                 .setLinearHeadingInterpolation(toBallsPose.getHeading(), pickedUpBallsPose.getHeading()).build();
 
         toFire2 = follower.pathBuilder()
-                .addPath(new BezierLine(pickedUpBallsPose, shootingPose))
+                .addPath(new BezierLine(pickedUpBallsPose, shootingPose2))
                 .setLinearHeadingInterpolation(pickedUpBallsPose.getHeading(), shootingPose.getHeading()).build();
 
         toPark = follower.pathBuilder()
-                .addPath(new BezierLine(shootingPose, parkPose))
+                .addPath(new BezierLine(shootingPose2, parkPose))
                 .setLinearHeadingInterpolation(shootingPose.getHeading(), parkPose.getHeading()).build();
 
         if (robot.detectAutoPattern()) {
@@ -144,7 +162,7 @@ public class AutoRedFarPedro extends OpMode {
     @Override
 
     public void start() {
-        currentState = FarStates.MOVE_TO_FIRE_1;
+        currentState = AutoRedFarPedro.FarStates.MOVE_TO_FIRE_1;
         robot.shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_MED;
         robot.hoodPosition = STEMperFiConstants.HOOD_RELATIVE_ANGLE_MED;
         if (STEMperFiConstants.PATTERN_22_PGP.equals(robot.pattern)) {
@@ -172,7 +190,7 @@ public class AutoRedFarPedro extends OpMode {
         // FLYWHEEL
         robot.flywheel();
 
-        if (currentState != FarStates.PARK && currentState != FarStates.MOVE_TO_BALLS && currentState != FarStates.COLLECT_BALLS) {
+        if (currentState != AutoRedFarPedro.FarStates.PARK && currentState != AutoRedFarPedro.FarStates.MOVE_TO_BALLS && currentState != AutoRedFarPedro.FarStates.COLLECT_BALLS) {
             robot.detectGoal(0);
         } else {
             robot.turretTargetPosition = 0;
@@ -190,13 +208,13 @@ public class AutoRedFarPedro extends OpMode {
 //        panelsTelemetry.debug("Y", follower.getPose().getY());
 //        panelsTelemetry.debug("Heading", follower.getPose().getHeading());
         joinedTelemetry.update();
-        if (currentState == FarStates.END) {
+        if (currentState == AutoRedFarPedro.FarStates.END) {
             stop();
         }
     }
 
     boolean ballShot = false;
-    public FarStates fire(FarStates cur, FarStates next, int nextIndexPosition) {
+    public AutoRedFarPedro.FarStates fire(AutoRedFarPedro.FarStates cur, AutoRedFarPedro.FarStates next, int nextIndexPosition) {
         joinedTelemetry.addData("fire stateTime", stateTime.milliseconds());
         joinedTelemetry.addData("fire ballShot", ballShot);
         if (stateTime.milliseconds() > 1_500) {
@@ -219,7 +237,7 @@ public class AutoRedFarPedro extends OpMode {
         return cur;
     }
 
-    public FarStates autonomousPathUpdate() {
+    public AutoRedFarPedro.FarStates autonomousPathUpdate() {
         switch (currentState) {
             case MOVE_TO_FIRE_1:
                 robot.isAutoShooterTriggerPressed = false;
@@ -233,16 +251,16 @@ public class AutoRedFarPedro extends OpMode {
                     robot.isAutoShooterTriggerPressed = true;
                     stateTime.reset();
                     ballShot = false;
-                    return FarStates.FIRE_1;
+                    return AutoRedFarPedro.FarStates.FIRE_1;
                 }
-                return FarStates.MOVE_TO_FIRE_1;
+                return AutoRedFarPedro.FarStates.MOVE_TO_FIRE_1;
             case FIRE_1:
-                return fire(FarStates.FIRE_1, FarStates.FIRE_2, shotOrder[1]);
+                return fire(AutoRedFarPedro.FarStates.FIRE_1, AutoRedFarPedro.FarStates.FIRE_2, shotOrder[1]);
             case FIRE_2:
-                return fire(FarStates.FIRE_2, FarStates.FIRE_3, shotOrder[2]);
+                return fire(AutoRedFarPedro.FarStates.FIRE_2, AutoRedFarPedro.FarStates.FIRE_3, shotOrder[2]);
             case FIRE_3:
-                FarStates temp = fire(FarStates.FIRE_3, FarStates.MOVE_TO_BALLS, shotOrder[0]);
-                if (temp == FarStates.MOVE_TO_BALLS) {
+                AutoRedFarPedro.FarStates temp = fire(AutoRedFarPedro.FarStates.FIRE_3, AutoRedFarPedro.FarStates.MOVE_TO_BALLS, shotOrder[0]);
+                if (temp == AutoRedFarPedro.FarStates.MOVE_TO_BALLS) {
                     robot.isAutoShooterTriggerPressed = false;
                     follower.followPath(toLoad, .6, true);
                 }
@@ -253,38 +271,38 @@ public class AutoRedFarPedro extends OpMode {
                 robot.indexerContents[2] = STEMperFiConstants.GB_LED_OFF;
                 robot.setIndexerPosition(0);
                 if (follower.isBusy()) {
-                    return FarStates.MOVE_TO_BALLS;
+                    return AutoRedFarPedro.FarStates.MOVE_TO_BALLS;
                 }
                 stateTime.reset();
                 robot.intakeOn = true;
                 follower.followPath(loadingBalls, .2, true);
-                return FarStates.COLLECT_BALLS;
+                return AutoRedFarPedro.FarStates.COLLECT_BALLS;
             case COLLECT_BALLS:
                 if (follower.isBusy()) {
-                    return FarStates.COLLECT_BALLS;
+                    return AutoRedFarPedro.FarStates.COLLECT_BALLS;
                 }
                 stateTime.reset();
                 robot.intakeOn = false;
                 follower.followPath(toFire2, .6, true);
-                return FarStates.MOVE_TO_FIRE_2;
+                return AutoRedFarPedro.FarStates.MOVE_TO_FIRE_2;
             case MOVE_TO_FIRE_2:
                 if (follower.isBusy()) {
                     robot.indexerContents[0] = STEMperFiConstants.GB_LED_GREEN;
                     robot.indexerContents[1] = STEMperFiConstants.GB_LED_PURPLE;
                     robot.indexerContents[2] = STEMperFiConstants.GB_LED_PURPLE;
                     robot.setIndexerPosition(shotOrder[0]);
-                    return FarStates.MOVE_TO_FIRE_2;
+                    return AutoRedFarPedro.FarStates.MOVE_TO_FIRE_2;
                 }
                 stateTime.reset();
                 robot.isAutoShooterTriggerPressed = true;
-                return FarStates.FIRE_4;
+                return AutoRedFarPedro.FarStates.FIRE_4;
             case FIRE_4:
-                return fire(FarStates.FIRE_4, FarStates.FIRE_5, shotOrder[1]);
+                return fire(AutoRedFarPedro.FarStates.FIRE_4, AutoRedFarPedro.FarStates.FIRE_5, shotOrder[1]);
             case FIRE_5:
-                return fire(FarStates.FIRE_5, FarStates.FIRE_6, shotOrder[2]);
+                return fire(AutoRedFarPedro.FarStates.FIRE_5, AutoRedFarPedro.FarStates.FIRE_6, shotOrder[2]);
             case FIRE_6:
-                FarStates temp2 = fire(FarStates.FIRE_6, FarStates.PARK, shotOrder[0]);
-                if (temp2 == FarStates.PARK) {
+                AutoRedFarPedro.FarStates temp2 = fire(AutoRedFarPedro.FarStates.FIRE_6, AutoRedFarPedro.FarStates.PARK, shotOrder[0]);
+                if (temp2 == AutoRedFarPedro.FarStates.PARK) {
                     stateTime.reset();
                     robot.isAutoShooterTriggerPressed = false;
                     follower.followPath(toPark, .6, true);
@@ -296,45 +314,16 @@ public class AutoRedFarPedro extends OpMode {
                 robot.fwBotMotor.set(0);
                 robot.fwBotMotor.stopMotor();
                 if (follower.isBusy()) {
-                    return FarStates.PARK;
+                    return AutoRedFarPedro.FarStates.PARK;
                 }
-                return FarStates.END;
+                return AutoRedFarPedro.FarStates.END;
         }
         // Add your state machine Here
         // Access paths with paths.pathName
         // Refer to the Pedro Pathing Docs (Auto Example) for an example state machine
-        return FarStates.END;
+        return AutoRedFarPedro.FarStates.END;
     }
 
 
 
-//    public static class Paths {
-//        public PathChain toFire1;
-//        public PathChain toLoad;
-//        public PathChain loadingBalls;
-//        public PathChain toFire2;
-//        public PathChain toPark;
-//
-//        public Paths(Follower follower) {
-//            toFire1 = follower.pathBuilder()
-//                    .addPath(new BezierLine(new Pose(83, 8.25), new Pose(83.000, 17)))
-//                    .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(63)).build();
-//
-//            toLoad = follower.pathBuilder()
-//                    .addPath(new BezierLine(new Pose(83.000, 17), new Pose(89.000, 22)))
-//                    .setLinearHeadingInterpolation(Math.toRadians(63), Math.toRadians(0)).build();
-//
-//            loadingBalls = follower.pathBuilder()
-//                    .addPath(new BezierLine(new Pose(89.000, 22), new Pose(115.000, 22)))
-//                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0)).build();
-//
-//            toFire2 = follower.pathBuilder()
-//                    .addPath(new BezierLine(new Pose(115, 22), new Pose(83.000, 17)))
-//                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(63)).build();
-//
-//            toPark = follower.pathBuilder()
-//                    .addPath(new BezierLine(new Pose(83.000, 17), new Pose(110, 0)))
-//                    .setLinearHeadingInterpolation(Math.toRadians(63), Math.toRadians(0)).build();
-//        }
-//    }
 }
