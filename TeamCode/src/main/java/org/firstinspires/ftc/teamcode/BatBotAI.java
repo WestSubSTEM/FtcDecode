@@ -352,7 +352,7 @@ public class BatBotAI
     public void shoot() {
         double newPosition = shooterTriggerPressed ? STEMperFiConstants.FLIPPER_SHOOT : STEMperFiConstants.FLIPPER_INTAKE;
         if (newPosition != flipperServoPosition) {
-            indexDelayDueToShooting = now + STEMperFiConstants.SHOOT_DELAY_INDEX_MS;
+            indexDelayDueToShooting = now + STEMperFiConstants.SHOOT_DELAY_FLIPPER_MS;
         }
         flipperServoPosition = newPosition;
         flipperServo.setPosition(flipperServoPosition);

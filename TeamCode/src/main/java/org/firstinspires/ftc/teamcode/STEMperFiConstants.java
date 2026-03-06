@@ -21,6 +21,7 @@ public class STEMperFiConstants {
 
     // +- 1% target considered on target
     public static final int TURRET_TARGET_DELTA = (int) (TURRET_MAX_TICKS * 0.01);
+    public static final int TURRET_TARGET_DELTA_NEAR = (int) (TURRET_MAX_TICKS * 0.02);
 
     public static final String BLACKBOARD_KEY_CS2_GREEN = "COLOR_SENSOR_2_GREEN";
     public static final String BLACKBOARD_KEY_CS3_GREEN = "COLOR_SENSOR_3_GREEN";
@@ -88,7 +89,7 @@ public class STEMperFiConstants {
     public static final double SHOOT_RELATIVE_POWER_MED_AUTO = .24;
     public static final double SHOOT_RELATIVE_POWER_HIGH = 1;
 
-    public static final long SHOOT_DELAY_INDEX_MS = 150;
+    public static final long SHOOT_DELAY_FLIPPER_MS = 500;
 
     public static final int LIMELIGHT_PIPELINE_BLUE = 7;
     public static final int LIMELIGHT_PIPELINE_RED = 6;

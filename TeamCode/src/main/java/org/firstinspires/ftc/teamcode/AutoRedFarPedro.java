@@ -203,13 +203,13 @@ public class AutoRedFarPedro extends OpMode {
             stateTime.reset();
             ballShot = false;
             return next;
-        } else if (stateTime.milliseconds() > STEMperFiConstants.INTAKE_DURING_INDEXER_MOVE_DELAY_MS + (STEMperFiConstants.SHOOT_DELAY_INDEX_MS * 2)) {
+        } else if (stateTime.milliseconds() > STEMperFiConstants.INTAKE_DURING_INDEXER_MOVE_DELAY_MS + (STEMperFiConstants.SHOOT_DELAY_FLIPPER_MS * 2)) {
             joinedTelemetry.addData("fire indexer", nextIndexPosition);
             robot.setIndexerPosition(nextIndexPosition);
-        } else if (stateTime.milliseconds() > STEMperFiConstants.SHOOT_DELAY_INDEX_MS*2) {
+        } else if (stateTime.milliseconds() > STEMperFiConstants.SHOOT_DELAY_FLIPPER_MS) {
             joinedTelemetry.addData("fire flipper down", STEMperFiConstants.FLIPPER_INTAKE);
             robot.flipperServo.setPosition(STEMperFiConstants.FLIPPER_INTAKE);
-        } else if (robot.lockLed.getPosition() != STEMperFiConstants.GB_LED_OFF) {
+        } else if (robot.isLocked()) {
             joinedTelemetry.addData("fire flipper up", STEMperFiConstants.FLIPPER_SHOOT);
             robot.flipperServo.setPosition(STEMperFiConstants.FLIPPER_SHOOT);
             ballShot = true;
@@ -231,6 +231,7 @@ public class AutoRedFarPedro extends OpMode {
                 joinedTelemetry.addData("detect", robot.isGoalDetected);
                 if (!follower.isBusy() && stateTime.milliseconds() > 6_000 && robot.isTurretStopped) {
                     robot.isAutoShooterTriggerPressed = true;
+                    robot.shootPressed = robot.now;
                     stateTime.reset();
                     ballShot = false;
                     return FarStates.FIRE_1;
@@ -244,6 +245,7 @@ public class AutoRedFarPedro extends OpMode {
                 FarStates temp = fire(FarStates.FIRE_3, FarStates.MOVE_TO_BALLS, shotOrder[0]);
                 if (temp == FarStates.MOVE_TO_BALLS) {
                     robot.isAutoShooterTriggerPressed = false;
+                    robot.shootPressed = 0;
                     follower.followPath(toLoad, .6, true);
                 }
                 return temp;
@@ -277,6 +279,7 @@ public class AutoRedFarPedro extends OpMode {
                 }
                 stateTime.reset();
                 robot.isAutoShooterTriggerPressed = true;
+                robot.shootPressed = robot.now;
                 return FarStates.FIRE_4;
             case FIRE_4:
                 return fire(FarStates.FIRE_4, FarStates.FIRE_5, shotOrder[1]);
@@ -287,11 +290,14 @@ public class AutoRedFarPedro extends OpMode {
                 if (temp2 == FarStates.PARK) {
                     stateTime.reset();
                     robot.isAutoShooterTriggerPressed = false;
+                    robot.shootPressed = 0;
                     follower.followPath(toPark, .6, true);
                 }
                 return temp2;
             case PARK:
                 robot.setIndexerPosition(0);
+                robot.hoodPosition = STEMperFiConstants.HOOD_RELATIVE_ANGLE_SHORT;
+                robot.hoodServo.setPosition(robot.hoodPosition);
                 robot.shooterSpeed = 0;
                 robot.fwBotMotor.set(0);
                 robot.fwBotMotor.stopMotor();

@@ -55,7 +55,7 @@ public class BatBot
     public Servo indexerServo, hoodServo;
     public Servo pinkLed, blueLed, yellowLed, lockLed;
     public Servo[] indexerLeds;
-    public double hoodPosition = 1.0;
+    public double hoodPosition = STEMperFiConstants.HOOD_RELATIVE_ANGLE_SHORT;
     public double flipperServoPosition = STEMperFiConstants.FLIPPER_INTAKE;
     public double indexerServoPosition = STEMperFiConstants.INDEX_1;
     public boolean intakeOn = false;
@@ -226,17 +226,21 @@ public class BatBot
         laserRight.setMode(DigitalChannel.Mode.INPUT);
     }
 
+    public boolean isLocked() {
+        return lockLed.getPosition() == STEMperFiConstants.GB_LED_RED;
+    }
+
     public void setIndexerPosition(int indexNew) {
         setIndexerPosition(indexNew, false);
     }
-    public void setIndexerPosition(int indexNew, boolean isInit) {
-        joinedTelemetry.addData("setIndexerPosition: ",  indexNew);
-        if (indexNew == -1) {
-            indexNew = 2;
-        } else if (indexNew == 3) {
-            indexNew = 0;
+    public void setIndexerPosition(int indexterIndexNew, boolean isInit) {
+        joinedTelemetry.addData("setIndexerPosition: ",  indexterIndexNew);
+        if (indexterIndexNew == -1) {
+            indexterIndexNew = 2;
+        } else if (indexterIndexNew == 3) {
+            indexterIndexNew = 0;
         }
-        if (indexNew >= 0 && indexNew < 3) {
+        if (indexterIndexNew >= 0 && indexterIndexNew < 3) {
             if (isInit) {
                 if (indexerIndex == 0) {
                     cs2RgbaGreen = cs2.getNormalizedColors();
@@ -247,13 +251,13 @@ public class BatBot
                 }
                 hasBlackboardColors = cs2RgbaGreen != null && cs2RgbaPurple != null;
             }
-            double indexerServoPositionNew = STEMperFiConstants.INDEXES.get(indexNew);
+            double indexerServoPositionNew = STEMperFiConstants.INDEXES.get(indexterIndexNew);
             if (indexerServoPositionNew != indexerServoPosition) {
+                indexerMoveDelay = now + STEMperFiConstants.INTAKE_DURING_INDEXER_MOVE_DELAY_MS * Math.abs(indexterIndexNew - indexerIndex);
                 indexerServoPosition = indexerServoPositionNew;
                 indexerServo.setPosition(indexerServoPosition);
                 indexerTimePressed = now;
-                indexerMoveDelay = now + STEMperFiConstants.INTAKE_DURING_INDEXER_MOVE_DELAY_MS;
-                indexerIndex = indexNew;
+                indexerIndex = indexterIndexNew;
                 indexMoved = true;
             }
         }
@@ -269,6 +273,8 @@ public class BatBot
     public boolean isShooting() {
         return now < indexDelayDueToShooting;
     }
+
+    public boolean isLockRequiredToShoot = true;
 
     public String getColorChar(double colorVal) {
         if (colorVal == STEMperFiConstants.GB_LED_PURPLE) {
@@ -342,7 +348,16 @@ public class BatBot
         now = System.currentTimeMillis();
         gp1.readButtons();
         gp2.readButtons();
-        isShooterTriggerPressed = isAutoShooterTriggerPressed || (gp2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.2 && (lockedCycleCount > STEMperFiConstants.ON_TARGET_CYCLE_COUNT && lastDetect != 0));
+        isShooterTriggerPressed = isAutoShooterTriggerPressed || (gp2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.2);
+        if (gp2.wasJustPressed(GamepadKeys.Button.BACK)) {
+            isLockRequiredToShoot = !isLockRequiredToShoot;
+            if (isLockRequiredToShoot) {
+                setAllLedsSolid(isRed ? Color.RED: Color.BLUE);
+            } else {
+                setAllLedsSolid(Color.WHITE);
+            }
+        }
+        joinedTelemetry.addData("isLockRequiredToShoot", isLockRequiredToShoot);
         joinedTelemetry.addData("index", indexerIndex);
         joinedTelemetry.addData("colors", getColorString());
         setIndexerLeds();
@@ -351,7 +366,7 @@ public class BatBot
     public void shoot() {
         double newPosition = isShooterTriggerPressed ? STEMperFiConstants.FLIPPER_SHOOT : STEMperFiConstants.FLIPPER_INTAKE;
         if (newPosition != flipperServoPosition) {
-            indexDelayDueToShooting = now + STEMperFiConstants.SHOOT_DELAY_INDEX_MS;
+            indexDelayDueToShooting = now + STEMperFiConstants.SHOOT_DELAY_FLIPPER_MS;
         }
         flipperServoPosition = newPosition;
         flipperServo.setPosition(flipperServoPosition);
@@ -482,9 +497,10 @@ public class BatBot
         } else if (gp2.getButton(GamepadKeys.Button.Y)) { // TRIANGLE
             shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_MED;
             hoodPosition = STEMperFiConstants.HOOD_RELATIVE_ANGLE_MED;
-        } else if (gp2.getButton(GamepadKeys.Button.B)) { // CIRCLE
-            shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_HIGH;
         }
+//        else if (gp2.getButton(GamepadKeys.Button.B)) { // CIRCLE
+//            shooterSpeed = STEMperFiConstants.SHOOT_RELATIVE_POWER_HIGH;
+//        }
         hoodServo.setPosition(hoodPosition);
         //joinedTelemetry.addData("shooterSpeed", shooterSpeed);
         if (shooterSpeed == 0) {
@@ -556,7 +572,7 @@ public class BatBot
     public boolean setTurretPower() {
         int currentPosition = -turretMotor.getCurrentPosition();
         int dif = turretTargetPosition - currentPosition;
-        isTurretStopped = Math.abs(dif) < STEMperFiConstants.TURRET_TARGET_DELTA;
+        isTurretStopped = shooterSpeed == STEMperFiConstants.SHOOT_RELATIVE_POWER_SHORT ? Math.abs(dif) < STEMperFiConstants.TURRET_TARGET_DELTA_NEAR : Math.abs(dif) < STEMperFiConstants.TURRET_TARGET_DELTA;
         lockedCycleCount = (isTurretStopped & isGoalDetected) ? lockedCycleCount + 1 : 0;
         if (lockedCycleCount >= STEMperFiConstants.ON_TARGET_CYCLE_COUNT) {
             lockLed.setPosition(STEMperFiConstants.GB_LED_RED);
@@ -588,8 +604,11 @@ public class BatBot
                 lastDetect = now;
                 isGoalDetected = true;
                 double xDif = -fiducialResult.getTargetXDegrees();
-                double xPixDif = fiducialResult.getTargetXPixels();
-                double xNoCrossDif = fiducialResult.getTargetXDegreesNoCrosshair();
+                if (!isRed && shooterSpeed != STEMperFiConstants.SHOOT_RELATIVE_POWER_SHORT) {
+                    xDif = xDif + 2;
+                }
+//                double xPixDif = fiducialResult.getTargetXPixels();
+//                double xNoCrossDif = fiducialResult.getTargetXDegreesNoCrosshair();
                 //joinedTelemetry.addData("Fiducial", "ID: %d, XDeg: %.1f, Xpix: %.1f", fiducialResult.getFiducialId(), xDif, xPixDif);
                 //joinedTelemetry.addData("Fiducial", "ID: %d, XnoC: %.1f, Xpix: %.1f", fiducialResult.getFiducialId(), xNoCrossDif, xPixDif);
                 adjustTurretTargetPosition(xDif);

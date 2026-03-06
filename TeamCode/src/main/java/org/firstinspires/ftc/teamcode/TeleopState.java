@@ -8,15 +8,16 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.Prism.Color;
 
-@TeleOp(name = "Tele QUAL No Lock", group = "QUAL")
-public class TeleopFastNoLock extends OpMode {
+@TeleOp(name = "Tele Toggle Lock", group = "STATE")
+public class TeleopState extends OpMode {
     private final ElapsedTime runtime = new ElapsedTime();
     public BatBotSmart robot = new BatBotSmart();
     JoinedTelemetry joinedTelemetry = new JoinedTelemetry(telemetry, PanelsTelemetry.INSTANCE.getFtcTelemetry());
     @Override
     public void init() {
         robot.init(hardwareMap, gamepad1, gamepad2, joinedTelemetry, blackboard);
-        /*
+        robot.isRed = STEMperFiConstants.ALLIANCE_RED.equals(blackboard.getOrDefault(STEMperFiConstants.BLACKBOARD_KEY_ALLIANCE, STEMperFiConstants.ALLIANCE_RED));
+        robot.setAllLedsSolid(robot.isRed ? Color.RED: Color.BLUE);        /*
         Before running the robot, recalibrate the IMU. This needs to happen when the robot is stationary
         The IMU will automatically calibrate when first powered on, but recalibrating before running
         the robot is a good idea to ensure that the calibration is "good".
@@ -34,7 +35,6 @@ public class TeleopFastNoLock extends OpMode {
     @Override
     public void init_loop() {
         robot.isRed = STEMperFiConstants.ALLIANCE_RED.equals(blackboard.getOrDefault(STEMperFiConstants.BLACKBOARD_KEY_ALLIANCE, STEMperFiConstants.ALLIANCE_RED));
-        robot.setAllLedsSolid(robot.isRed ? Color.RED: Color.BLUE);
         robot.limelight.pipelineSwitch(robot.isRed ? STEMperFiConstants.LIMELIGHT_PIPELINE_RED : STEMperFiConstants.LIMELIGHT_PIPELINE_BLUE);
         joinedTelemetry.addData("Alliance", blackboard.get(STEMperFiConstants.BLACKBOARD_KEY_ALLIANCE));
     }
@@ -46,8 +46,6 @@ public class TeleopFastNoLock extends OpMode {
     public void start() {
         runtime.reset();
         robot.limelight.start();
-        robot.isRed = blackboard.getOrDefault(STEMperFiConstants.BLACKBOARD_KEY_PATTERN, STEMperFiConstants.PATTERN_21_GPP) == STEMperFiConstants.ALLIANCE_RED;
-
     }
 
     @Override
@@ -56,9 +54,7 @@ public class TeleopFastNoLock extends OpMode {
 
         // Drive
         robot.mecanumDrive();
-
-
-
+        
         // Indexer
         robot.indexer(false);
         // INTAKE
@@ -72,6 +68,8 @@ public class TeleopFastNoLock extends OpMode {
         robot.setTurretPower();
 
         // SHOOTER
-        robot.shootNoLock();
+        robot.shoot();
+
+        robot.autoHealSlotState();
     }
 }
